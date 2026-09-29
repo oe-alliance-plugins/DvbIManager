@@ -936,7 +936,7 @@ class ServiceListParser:
 						value = (identifier or "").strip()
 						lower = value.lower()
 						if lower.startswith(ICECAST_PREFIX):
-							decoded = unquote(value[len(ICECAST_PREFIX) :])
+							decoded = unquote(value[len(ICECAST_PREFIX):])
 							return (decoded if looksLikeHttpUrl(decoded) else "", ICECAST_PREFIX[:-1], "icecast")
 						if looksLikeStreamUrl(value):
 							return value, "url", "identifier"
@@ -2291,7 +2291,7 @@ class ManifestInspector:
 					if marker < 4 or len(payload) < marker + 24:
 						return ""
 					try:
-						return str(UUID(bytes=payload[marker + 8 : marker + 24])).upper()
+						return str(UUID(bytes=payload[marker + 8: marker + 24])).upper()
 					except (ValueError, AttributeError):
 						return ""
 
@@ -3135,7 +3135,7 @@ def cleanDescription(value):
 
 
 def hexFromDigest(digest, start, length, minimum=1):
-	value = int(digest[start : start + length], 16)
+	value = int(digest[start: start + length], 16)
 	return max(value, minimum)
 
 
@@ -4797,13 +4797,13 @@ class LogoCache:
 		while offset < len(content):
 			if offset + 12 > len(content):
 				return False
-			length = unpack(">I", content[offset : offset + 4])[0]
-			chunkType = content[offset + 4 : offset + 8]
+			length = unpack(">I", content[offset: offset + 4])[0]
+			chunkType = content[offset + 4: offset + 8]
 			chunkEnd = offset + 12 + length
 			if chunkEnd > len(content):
 				return False
-			chunkData = content[offset + 8 : offset + 8 + length]
-			storedCrc = unpack(">I", content[offset + 8 + length : chunkEnd])[0]
+			chunkData = content[offset + 8: offset + 8 + length]
+			storedCrc = unpack(">I", content[offset + 8 + length: chunkEnd])[0]
 			if crc32(chunkType + chunkData) & 0xFFFFFFFF != storedCrc:
 				return False
 

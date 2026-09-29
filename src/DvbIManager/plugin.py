@@ -498,7 +498,7 @@ def resolveDvbiService(service, **kwargs):
 		path = ""
 	if not path.startswith("dvbi://"):
 		return None, None
-	token = path[len("dvbi://") :].split("/", 1)[0]
+	token = path[len("dvbi://"):].split("/", 1)[0]
 	entry = playbackEntry(token)
 	url = entry.get("url", "")
 	if url:
