@@ -1,0 +1,982 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the DVB-I Manager package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: DVB-I Manager 0.4.7\n"
+"Report-Msgid-Bugs-To: https://github.com/oe-alliance-plugins/DvbIManager/issues\n"
+"POT-Creation-Date: 2026-09-29 20:34+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../plugin.py:760
+msgid ""
+"\n"
+"Programme information is incomplete; check the import report."
+msgstr ""
+
+#: ../plugin.py:748
+msgid ""
+"\n"
+"Some sources are unavailable; their last usable entries were retained."
+msgstr ""
+
+#: ../plugin.py:758
+msgid ""
+"\n"
+"The provider could not supply a valid update; the last usable list was used."
+msgstr ""
+
+#: ../plugin.py:566
+msgid " (Test / Demo)"
+msgstr ""
+
+#: ../plugin.py:568
+msgid " (cached; source unavailable)"
+msgstr ""
+
+#: ../plugin.py:79
+msgid " (saved)"
+msgstr ""
+
+#: ../plugin.py:677
+msgid " (selected; outside filters)"
+msgstr ""
+
+#: ../plugin.py:826
+msgid " Provider unavailable; cached data used."
+msgstr ""
+
+#: ../plugin.py:824
+msgid " Update incomplete; please check the last result."
+msgstr ""
+
+#: ../plugin.py:41
+msgid "1 native HTTP MPEG-TS only"
+msgstr ""
+
+#: ../plugin.py:39
+msgid "4097 GStreamer / Enigma2"
+msgstr ""
+
+#: ../plugin.py:42
+msgid "5001 ServiceApp gstplayer"
+msgstr ""
+
+#: ../plugin.py:40
+msgid "5002 ServiceApp / exteplayer3"
+msgstr ""
+
+#: ../plugin.py:1159
+msgid "A DVB-I background task is already running."
+msgstr ""
+
+#: ../plugin.py:893 ../plugin.py:910
+msgid "A DVB-I task is already running."
+msgstr ""
+
+#: ../setup.xml
+msgid "Advanced settings"
+msgstr ""
+
+#: ../plugin.py:537
+msgid "All"
+msgstr ""
+
+#: ../plugin.py:51 ../plugin.py:645
+msgid "All countries"
+msgstr ""
+
+#: ../plugin.py:54 ../plugin.py:666
+msgid "All delivery systems"
+msgstr ""
+
+#: ../plugin.py:53 ../plugin.py:659
+msgid "All languages"
+msgstr ""
+
+#: ../setup.xml
+msgid "All languages accepts every language; choosing a language filters the available lists."
+msgstr ""
+
+#: ../plugin.py:52 ../plugin.py:652
+msgid "All providers"
+msgstr ""
+
+#: ../plugin.py:38
+msgid "Automatic (4097 GStreamer preferred)"
+msgstr ""
+
+#: ../setup.xml
+msgid "Automatic prefers GStreamer 4097 and falls back to a suitable installed player. A fixed selection only imports streams supported by that player. Native DVB playback requires verified HTTP transport streams."
+msgstr ""
+
+#: ../plugin.py:746
+#, python-brace-format
+msgid "Available channel lists updated: {0}. Choose a list and, if offered, your region."
+msgstr ""
+
+#: ../DvbI.py:5700
+msgid "Caching DVB-I logos"
+msgstr ""
+
+#: ../plugin.py:991
+msgid "Cancel"
+msgstr ""
+
+#: ../plugin.py:966
+msgid "Cancel any changed settings and exit"
+msgstr ""
+
+#: ../plugin.py:967
+msgid "Cancel any changed settings and exit all menus"
+msgstr ""
+
+#: ../plugin.py:1173
+msgid "Channel data is being checked in the background. You can continue watching TV."
+msgstr ""
+
+#: ../setup.xml
+msgid "Channel list"
+msgstr ""
+
+#: ../DvbI.py:5840
+#, python-brace-format
+msgid "Channel list ready: {0} TV, {1} radio"
+msgstr ""
+
+#: ../plugin.py:818
+msgid "Channel list updated"
+msgstr ""
+
+#: ../plugin.py:754
+#, python-brace-format
+msgid ""
+"Channel list updated: {0}\n"
+"{1} TV channels, {2} radio channels.\n"
+"The channels are available in the normal TV and radio lists."
+msgstr ""
+
+#: ../plugin.py:1078
+msgid "Choose a channel list and press green to add its free-to-air channels."
+msgstr ""
+
+#: ../setup.xml
+msgid "Choose a country, or all countries to see the available international channel lists."
+msgstr ""
+
+#: ../setup.xml
+msgid "Choose a region offered by this channel list, or keep the provider's default selection."
+msgstr ""
+
+#: ../setup.xml
+msgid "Choose the broadcaster or platform whose free-to-air channels you want to add."
+msgstr ""
+
+#: ../DvbI.py:5738
+msgid "Committing DVB-I bouquet"
+msgstr ""
+
+#: ../plugin.py:971
+msgid "Configure DVB-I updates in the Enigma2 scheduler"
+msgstr ""
+
+#: ../DvbI.py:4028
+msgid "Content Guide XML exceeds the size limit"
+msgstr ""
+
+#: ../DvbI.py:4025
+msgid "Content Guide XML must be bytes or text"
+msgstr ""
+
+#: ../DvbI.py:4037
+msgid "Content Guide root must be TVAMain"
+msgstr ""
+
+#: ../DvbI.py:3753
+msgid "ContentGuideServiceRef is required as the sid parameter"
+msgstr ""
+
+#: ../plugin.py:1066
+#, python-brace-format
+msgid "Could not read last DVB-I result: {0}"
+msgstr ""
+
+#: ../plugin.py:1151
+#, python-brace-format
+msgid ""
+"Could not start DVB-I import:\n"
+"{0}"
+msgstr ""
+
+#: ../plugin.py:1164
+msgid "Could not start the live DVB-I registry refresh."
+msgstr ""
+
+#: ../DvbI.py:5784
+#, python-brace-format
+msgid "Could not write optional import metadata: {0}"
+msgstr ""
+
+#: ../DvbI.py:5765
+#, python-brace-format
+msgid "Could not write optional import report: {0}"
+msgstr ""
+
+#: ../setup.xml
+msgid "Country"
+msgstr ""
+
+#: ../plugin.py:1226 ../plugin.py:1233
+msgid "Create TV and radio channel lists from DVB-I"
+msgstr ""
+
+#: ../plugin.py:958
+msgid "Create channel list"
+msgstr ""
+
+#: ../DvbI.py:5593
+#, python-brace-format
+msgid "Current service list is invalid; using last-known-good data: {0}"
+msgstr ""
+
+#: ../DvbI.py:4033
+msgid "DTD and entity declarations are not supported"
+msgstr ""
+
+#: ../DvbI.py:2320
+msgid "DTD/entity declarations are not accepted"
+msgstr ""
+
+#: ../DvbI.py:185
+msgid "DVB-I HTTP cache quota is exhausted"
+msgstr ""
+
+#: ../plugin.py:1225
+msgid "DVB-I Manager"
+msgstr ""
+
+#: ../plugin.py:974
+msgid "DVB-I Manager Actions"
+msgstr ""
+
+#: ../plugin.py:900
+msgid "DVB-I Manager is disabled or not ready."
+msgstr ""
+
+#: ../plugin.py:1246
+msgid "DVB-I Resolver"
+msgstr ""
+
+#: ../DvbI.py:3651
+msgid "DVB-I TV/radio lists do not belong together"
+msgstr ""
+
+#: ../DvbI.py:190
+msgid "DVB-I URL must use HTTP or HTTPS"
+msgstr ""
+
+#: ../DvbI.py:152
+msgid "DVB-I cache object exceeds the total cache quota"
+msgstr ""
+
+#: ../plugin.py:957 ../plugin.py:1211 ../plugin.py:1232
+msgid "DVB-I channel search"
+msgstr ""
+
+#: ../plugin.py:845 ../plugin.py:925
+msgid "DVB-I channel update"
+msgstr ""
+
+#: ../plugin.py:315
+msgid "DVB-I data prepared"
+msgstr ""
+
+#: ../setup.xml
+msgid "DVB-I enabled"
+msgstr ""
+
+#: ../plugin.py:775
+#, python-brace-format
+msgid ""
+"DVB-I import complete.\n"
+"List: {0}\n"
+"Services: {1}, written: {2}, skipped: {3}\n"
+"Written TV/radio: {4}/{5}\n"
+"Broadcast match/written: {6}/{7}, IP written: {8}\n"
+"EPG mapped/schedule sources: {9}/{10}\n"
+"Bouquets: {11}\n"
+"Report: {12}"
+msgstr ""
+
+#: ../plugin.py:763
+#, python-brace-format
+msgid ""
+"DVB-I regions loaded.\n"
+"List: {0}\n"
+"Regions: {1} selectable, {2} total"
+msgstr ""
+
+#: ../DvbI.py:134 ../DvbI.py:221 ../DvbI.py:227 ../DvbI.py:274
+msgid "DVB-I response exceeds the size limit"
+msgstr ""
+
+#: ../DvbI.py:5577
+msgid "DVB-I service list contains no services"
+msgstr ""
+
+#: ../DvbI.py:1265
+msgid "DVB-I service list content must be bytes or text"
+msgstr ""
+
+#: ../DvbI.py:5575 ../DvbI.py:5860
+#, python-brace-format
+msgid "DVB-I service list responseStatus is {0}"
+msgstr ""
+
+#: ../DvbI.py:1272
+msgid "DVB-I service list root must be ServiceList"
+msgstr ""
+
+#: ../plugin.py:1138
+#, python-brace-format
+msgid ""
+"DVB-I settings are incomplete:\n"
+"{0}"
+msgstr ""
+
+#: ../plugin.py:743
+#, python-brace-format
+msgid ""
+"DVB-I synchronisation failed:\n"
+"{0}"
+msgstr ""
+
+#: ../plugin.py:327 ../plugin.py:360
+msgid "DVB-I update cancelled"
+msgstr ""
+
+#: ../plugin.py:809
+#, python-brace-format
+msgid "DVB-I update failed: {0}"
+msgstr ""
+
+#: ../plugin.py:1021
+msgid "DVB-I update scheduled. Changes are available in the Enigma2 scheduler."
+msgstr ""
+
+#: ../plugin.py:815
+msgid "DVB-I: Regions for the selected channel list updated."
+msgstr ""
+
+#: ../plugin.py:813
+#, python-brace-format
+msgid "DVB-I: {0} available channel lists updated."
+msgstr ""
+
+#: ../plugin.py:817
+#, python-brace-format
+msgid "DVB-I: {0}{1} — {2} TV, {3} radio."
+msgstr ""
+
+#: ../setup.xml
+msgid "Data and cache directory"
+msgstr ""
+
+#: ../plugin.py:56 ../plugin.py:695
+msgid "Default / no regional selection"
+msgstr ""
+
+#: ../setup.xml
+msgid "Delivery system"
+msgstr ""
+
+#: ../DvbI.py:5621
+msgid "Detecting IP media types with bounded range probes"
+msgstr ""
+
+#: ../DvbI.py:6144
+#, python-brace-format
+msgid "Discovering lists: {0}"
+msgstr ""
+
+#: ../plugin.py:302
+msgid "Download and prepare DVB-I data"
+msgstr ""
+
+#: ../setup.xml
+msgid "Download channel logos in the background and install them in the normal Enigma2 picon paths. Existing picons are kept."
+msgstr ""
+
+#: ../setup.xml
+msgid "Download picon logos"
+msgstr ""
+
+#: ../setup.xml
+msgid "Enable DVB-I channel-list updates and registered internet alternatives."
+msgstr ""
+
+#: ../plugin.py:373
+msgid "Enigma2 EPG cache is unavailable"
+msgstr ""
+
+#: ../DvbI.py:3672
+msgid "Enigma2 could not name the DVB-I channel list: "
+msgstr ""
+
+#: ../DvbI.py:3675
+msgid "Enigma2 could not remove an empty DVB-I channel list: "
+msgstr ""
+
+#: ../DvbI.py:3664
+msgid "Enigma2 could not save the DVB-I channel list: "
+msgstr ""
+
+#: ../DvbI.py:5558
+#, python-brace-format
+msgid "Fetching DVB-I service list: {0}"
+msgstr ""
+
+#: ../DvbI.py:2621 ../DvbI.py:2644 ../DvbI.py:2673
+msgid "HLS variant URI is missing"
+msgstr ""
+
+#: ../DvbI.py:2708
+msgid "HLS variant URI must use HTTP or HTTPS"
+msgstr ""
+
+#: ../DvbI.py:2712
+msgid "HTTPS HLS master may not downgrade a variant to HTTP"
+msgstr ""
+
+#: ../setup.xml
+msgid "IP player"
+msgstr ""
+
+#: ../DvbI.py:3623
+msgid "Incomplete DVB-I TV/radio channel-list result"
+msgstr ""
+
+#: ../DvbI.py:5642
+msgid "Inspecting adaptive manifests for FTA protection"
+msgstr ""
+
+#: ../DvbI.py:3629
+msgid "Invalid DVB-I channel-list filename"
+msgstr ""
+
+#: ../DvbI.py:3633
+msgid "Invalid DVB-I channel-list name"
+msgstr ""
+
+#: ../DvbI.py:3636
+msgid "Invalid DVB-I channel-list size"
+msgstr ""
+
+#: ../plugin.py:412
+msgid "Invalid DVB-I fallback cache version; create the channel list again"
+msgstr ""
+
+#: ../plugin.py:438
+msgid "Invalid DVB-I fallback map"
+msgstr ""
+
+#: ../plugin.py:415
+msgid "Invalid DVB-I per-list fallback cache"
+msgstr ""
+
+#: ../plugin.py:426
+msgid "Invalid DVB-I per-list fallback entries"
+msgstr ""
+
+#: ../DvbI.py:3641 ../DvbI.py:3644
+msgid "Invalid DVB-I service reference"
+msgstr ""
+
+#: ../DvbI.py:5976
+#, python-brace-format
+msgid "Invalid DVB-I source configuration {0}: {1}"
+msgstr ""
+
+#: ../setup.xml
+msgid "Language"
+msgstr ""
+
+#: ../plugin.py:1064
+msgid "Last DVB-I import"
+msgstr ""
+
+#: ../plugin.py:1035
+#, python-brace-format
+msgid ""
+"Last DVB-I import\n"
+"List: {0}\n"
+"Source: {1}\n"
+"Services: {2}\n"
+"Written TV/radio: {3}/{4}\n"
+"Broadcast match/written: {5}/{6}\n"
+"IP written: {7}\n"
+"DRM/HbbTV marked: {8}/{9}\n"
+"EPG mapped/schedule sources: {10}/{11}\n"
+"Report: {12}\n"
+"Bouquets: TV {13}, Radio {14}"
+msgstr ""
+
+#: ../plugin.py:961
+msgid "Last result"
+msgstr ""
+
+#: ../plugin.py:1131
+msgid "Live registry data is still loading. Select a service list when it is ready."
+msgstr ""
+
+#: ../plugin.py:671
+msgid "Live registry data not loaded"
+msgstr ""
+
+#: ../setup.xml
+msgid "Load programme information into the normal Enigma2 programme guide."
+msgstr ""
+
+#: ../plugin.py:313
+msgid "Loading DVB-I data"
+msgstr ""
+
+#: ../plugin.py:1081
+msgid "Loading live registry data in the background..."
+msgstr ""
+
+#: ../plugin.py:1125
+msgid "Loading regions for the selected live service list..."
+msgstr ""
+
+#: ../DvbI.py:5656
+msgid "Matching broadcast services"
+msgstr ""
+
+#: ../plugin.py:420
+msgid "Missing DVB-I channel-list identity"
+msgstr ""
+
+#: ../plugin.py:506
+#, python-brace-format
+msgid "No cached playback target exists for DVB-I service {0}"
+msgstr ""
+
+#: ../DvbI.py:5696
+msgid "No playable free-to-air channels found. Check reception, region and installed players. Existing channel lists were not changed."
+msgstr ""
+
+#: ../DvbI.py:3653
+msgid "No playable free-to-air channels found. Existing channel lists were not changed."
+msgstr ""
+
+#: ../plugin.py:1028
+msgid "No previous DVB-I import result found."
+msgstr ""
+
+#: ../setup.xml
+msgid "Optionally filter lists by their announced reception methods."
+msgstr ""
+
+#: ../setup.xml
+msgid "Optionally narrow the available lists to one provider."
+msgstr ""
+
+#: ../DvbI.py:5562
+msgid "Parsing DVB-I service list"
+msgstr ""
+
+#: ../DvbI.py:5732
+msgid "Preparing channel lists for Enigma2"
+msgstr ""
+
+#: ../setup.xml
+msgid "Provider"
+msgstr ""
+
+#: ../plugin.py:772
+msgid "Radio: "
+msgstr ""
+
+#: ../plugin.py:970
+msgid "Refresh the live DVB-I registry"
+msgstr ""
+
+#: ../plugin.py:1161
+msgid "Refreshing live DVB-I registry data..."
+msgstr ""
+
+#: ../setup.xml
+msgid "Region"
+msgstr ""
+
+#: ../plugin.py:753
+#, python-brace-format
+msgid "Regions loaded for {0}."
+msgstr ""
+
+#: ../plugin.py:1247
+msgid "Resolve stable DVB-I playback targets"
+msgstr ""
+
+#: ../plugin.py:991
+msgid "Save"
+msgstr ""
+
+#: ../plugin.py:968
+msgid "Save changed settings or close without changes"
+msgstr ""
+
+#: ../plugin.py:969
+msgid "Save settings and create the selected channel list"
+msgstr ""
+
+#: ../plugin.py:960
+msgid "Schedule updates"
+msgstr ""
+
+#: ../DvbI.py:3774
+msgid "ScheduleInfoEndpoint must use HTTP or HTTPS"
+msgstr ""
+
+#: ../plugin.py:55 ../plugin.py:671
+msgid "Select one live service list"
+msgstr ""
+
+#: ../plugin.py:159
+msgid "Select one service list from the live DVB-I registry."
+msgstr ""
+
+#: ../setup.xml
+msgid "Show additional filters and playback settings. These are not needed for normal channel-list creation."
+msgstr ""
+
+#: ../plugin.py:981
+msgid "Show the last DVB-I import result"
+msgstr ""
+
+#: ../DvbI.py:6157
+msgid "Source unavailable, stale or empty"
+msgstr ""
+
+#: ../setup.xml
+msgid "Storage for downloaded channel data and diagnostics."
+msgstr ""
+
+#: ../setup.xml
+msgid "Synchronise now/next EPG"
+msgstr ""
+
+#: ../DvbI.py:5720
+msgid "Synchronising DVB-I now/next EPG"
+msgstr ""
+
+#: ../plugin.py:770
+msgid "TV: "
+msgstr ""
+
+#: ../plugin.py:163
+msgid "The selected live registry entry has no usable ServiceListURI."
+msgstr ""
+
+#: ../plugin.py:561
+msgid "Unnamed list"
+msgstr ""
+
+#: ../plugin.py:959
+msgid "Update available lists"
+msgstr ""
+
+#: ../plugin.py:352
+msgid "Update channel lists and programme guide"
+msgstr ""
+
+#: ../plugin.py:1083
+msgid "Updating cached live registry data in the background..."
+msgstr ""
+
+#: ../setup.xml
+msgid "Use broadcast channels"
+msgstr ""
+
+#: ../setup.xml
+msgid "Use internet when tuner is busy"
+msgstr ""
+
+#: ../setup.xml
+msgid "Use the verified DVB-I version of the same channel when no tuner is free. A new recording can move live TV to the internet; recordings and timeshift are not moved."
+msgstr ""
+
+#: ../DvbI.py:5704
+msgid "Writing DVB-I ContentGuide / EPG mapping metadata"
+msgstr ""
+
+#: ../DvbI.py:5676
+msgid "Writing bouquet"
+msgstr ""
+
+#: ../setup.xml
+msgid "Yes prefers matching free-to-air satellite, cable or terrestrial channels. No creates an IP-only list and skips channels without a usable free-to-air stream. Regions and reception modes have separate bouquets."
+msgstr ""
+
+#: ../DvbI.py:4094
+msgid "cache_dir is required when no fetcher is supplied"
+msgstr ""
+
+#: ../DvbI.py:2160
+msgid "cache_dir or fetcher is required"
+msgstr ""
+
+#: ../DvbI.py:198
+msgid "cached DVB-I response exceeds the size limit"
+msgstr ""
+
+#: ../DvbI.py:4758
+msgid "credentials are not allowed in logo URLs"
+msgstr ""
+
+#: ../DvbI.py:192
+msgid "credentials in DVB-I URLs are not supported"
+msgstr ""
+
+#: ../DvbI.py:2710
+msgid "credentials in HLS variant URIs are not supported"
+msgstr ""
+
+#: ../DvbI.py:3776
+msgid "credentials in ScheduleInfoEndpoint URLs are not supported"
+msgstr ""
+
+#: ../DvbI.py:1997
+msgid "credentials in media URLs are not supported"
+msgstr ""
+
+#: ../DvbI.py:2024
+msgid "credentials in redirected media URLs are not supported"
+msgstr ""
+
+#: ../DvbI.py:5959
+msgid "duplicate source id"
+msgstr ""
+
+#: ../DvbI.py:2592
+msgid "empty HLS key attribute"
+msgstr ""
+
+#: ../DvbI.py:3866
+msgid "empty dateTime"
+msgstr ""
+
+#: ../DvbI.py:3853
+msgid "end must be later than a non-negative start"
+msgstr ""
+
+#: ../DvbI.py:5936
+msgid "expected <dvbi> root"
+msgstr ""
+
+#: ../DvbI.py:5940
+msgid "expected <source> entry"
+msgstr ""
+
+#: ../DvbI.py:2163
+msgid "fetcher must provide fetch(url, timeout, force)"
+msgstr ""
+
+#: ../DvbI.py:2362
+msgid "fetcher returned non-byte manifest content"
+msgstr ""
+
+#: ../DvbI.py:2587
+msgid "invalid HLS key attribute"
+msgstr ""
+
+#: ../DvbI.py:2701 ../DvbI.py:2703
+msgid "invalid HLS variant URI"
+msgstr ""
+
+#: ../DvbI.py:5955
+msgid "invalid boolean: "
+msgstr ""
+
+#: ../DvbI.py:4750 ../DvbI.py:4752
+msgid "invalid logo URL"
+msgstr ""
+
+#: ../DvbI.py:4762
+msgid "invalid logo URL port"
+msgstr ""
+
+#: ../DvbI.py:6133
+msgid "invalid registry source set"
+msgstr ""
+
+#: ../DvbI.py:5950
+msgid "invalid source kind"
+msgstr ""
+
+#: ../DvbI.py:6103
+msgid "live registry returned no service lists; keeping the cached catalogue"
+msgstr ""
+
+#: ../DvbI.py:6107
+#, python-brace-format
+msgid "live registry shrank from {0} to {1} lists; keeping last-known-good data"
+msgstr ""
+
+#: ../DvbI.py:4766
+msgid "local logo hosts are not allowed"
+msgstr ""
+
+#: ../DvbI.py:4748
+msgid "logo URL must be text"
+msgstr ""
+
+#: ../DvbI.py:4756
+msgid "logo URL must use HTTP or HTTPS"
+msgstr ""
+
+#: ../DvbI.py:2675
+msgid "malformed HLS key declaration"
+msgstr ""
+
+#: ../DvbI.py:2365
+msgid "manifest exceeds the inspection size limit"
+msgstr ""
+
+#: ../DvbI.py:1995
+msgid "media probe accepts only HTTP(S) URLs"
+msgstr ""
+
+#: ../DvbI.py:2022
+msgid "media probe redirect left HTTP(S)"
+msgstr ""
+
+#: ../DvbI.py:2026
+msgid "media probe rejected HTTPS downgrade redirect"
+msgstr ""
+
+#: ../DvbI.py:5963
+msgid "no discovery sources configured"
+msgstr ""
+
+#: ../DvbI.py:4772
+msgid "non-public logo addresses are not allowed"
+msgstr ""
+
+#: ../DvbI.py:5933
+msgid "oversized XML or unsupported document declaration"
+msgstr ""
+
+#: ../DvbI.py:6186
+msgid "registry returned too many service lists"
+msgstr ""
+
+#: ../DvbI.py:2324
+msgid "resource is not a DASH MPD"
+msgstr ""
+
+#: ../DvbI.py:2609
+msgid "resource is not an HLS playlist"
+msgstr ""
+
+#: ../plugin.py:518
+msgid "saved"
+msgstr ""
+
+#: ../plugin.py:704
+msgid "saved; region data not loaded"
+msgstr ""
+
+#: ../plugin.py:682
+msgid "saved; unavailable in current live catalogue"
+msgstr ""
+
+#: ../DvbI.py:3808 ../DvbI.py:3813 ../DvbI.py:3851
+msgid "schedule timestamps must be Unix integers"
+msgstr ""
+
+#: ../DvbI.py:3817
+msgid "schedule timestamps must be multiples of 10800 seconds"
+msgstr ""
+
+#: ../DvbI.py:3815
+msgid "schedule timestamps must not be negative"
+msgstr ""
+
+#: ../DvbI.py:3819
+msgid "schedule windows must be exactly 6 or 12 hours"
+msgstr ""
+
+#: ../DvbI.py:5588
+#, python-brace-format
+msgid "service count dropped from {0} to {1}; refusing an unconfirmed mass removal"
+msgstr ""
+
+#: ../DvbI.py:6012
+msgid "service list contains no services"
+msgstr ""
+
+#: ../DvbI.py:5944
+msgid "source URL must be an absolute HTTP(S) URL without credentials"
+msgstr ""
+
+#: ../DvbI.py:2431
+msgid "timezone required"
+msgstr ""
+
+#: ../DvbI.py:272
+msgid "uncompressed DVB-I response exceeds the size limit"
+msgstr ""
+
+#: ../DvbI.py:6242
+#, python-brace-format
+msgid "unknown DVB-I task action: {0}"
+msgstr ""
+
+#: ../DvbI.py:5966
+msgid "unknown defaultSource"
+msgstr ""
+
+#: ../plugin.py:743 ../plugin.py:806
+msgid "unknown task error"
+msgstr ""
+
+#: ../DvbI.py:1274
+msgid "unsupported DVB-I service list namespace"
+msgstr ""
+
+#: ../DvbI.py:3932
+msgid "unsupported ISO 8601 duration"
+msgstr ""
+
+#: ../DvbI.py:2425
+msgid "unsupported duration"
+msgstr ""
+
+#: ../DvbI.py:2579
+msgid "unterminated HLS attribute quote"
+msgstr ""
+
+#: ../DvbI.py:3846
+msgid "window duration must be 6 or 12 hours"
+msgstr ""
+
+#: ../DvbI.py:4561 ../DvbI.py:4563
+#, python-brace-format
+msgid "{0} must be a positive integer"
+msgstr ""
+
+#: ../DvbI.py:4581 ../DvbI.py:4583
+#, python-brace-format
+msgid "{0} must be positive"
+msgstr ""

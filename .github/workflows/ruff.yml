@@ -1,0 +1,12 @@
+name: Ruff Linter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    uses: oe-alliance-plugins/.github/.github/workflows/ruff.yml@main
+    # with:
+    #   path: src

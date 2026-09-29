@@ -1,0 +1,4 @@
+include dvbi.xml setup_translate.py
+recursive-include DvbIManager *.py *.png *.xml *.po *.pot *.sh
+include DvbIManager/LICENSE DvbIManager/maintainer.info
+global-exclude *.py[cod] *.mo

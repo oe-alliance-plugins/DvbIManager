@@ -1,0 +1,12 @@
+name: Pylint Code Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    uses: oe-alliance-plugins/.github/.github/workflows/pylint.yml@main
+    # with:
+    #   path: src
