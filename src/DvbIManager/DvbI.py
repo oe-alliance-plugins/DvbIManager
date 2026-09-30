@@ -87,6 +87,44 @@ def readJson(path, default=None):
 		return {} if default is None else default
 
 
+class FallbackStore:
+	"""One flash-resident map, independent of the optional download cache."""
+
+	def __init__(self, directory="/etc/enigma2"):
+		self.path = join(directory, "dvbi_fallbacks.json")
+		self.sources = {}
+
+	def load(self):
+		self.sources = {}
+		if not isfile(self.path):
+			return {}, {}
+		# A damaged file must not be treated as an empty, overwritable map.
+		with open(self.path, encoding="utf-8") as handle:
+			stored = jsonLoad(handle)
+		if not isinstance(stored, dict) or stored.get("version") != 1 or not isinstance(stored.get("automatic"), dict) or not isinstance(stored.get("manual"), dict):
+			raise ValueError(_("Invalid fallback mapping file: {0}").format(self.path))
+		self.sources = stored.get("sources", {})
+		if not isinstance(self.sources, dict) or any(not isinstance(source, dict) for source in self.sources.values()):
+			raise ValueError(_("Invalid fallback mapping file: {0}").format(self.path))
+		return stored["automatic"], stored["manual"]
+
+	@staticmethod
+	def merge(lists, manual, preferAutomatic=True):
+		automatic = {}
+		conflicts = set()
+		for services in lists.values():
+			if not isinstance(services, list):
+				raise ValueError(_("Invalid automatic fallback mappings"))
+			for source, target in services:
+				if source in automatic and automatic[source] != target:
+					conflicts.add(source)
+				automatic[source] = target
+		# Conflicting service lists must not silently select another programme.
+		for source in conflicts:
+			automatic.pop(source)
+		return (manual | automatic) if preferAutomatic else (automatic | manual)
+
+
 class FetchResult:
 	"""HTTP fetch result."""
 
@@ -3320,13 +3358,13 @@ class BouquetWriter:
 				continue
 
 			service.selectedRef = ref
-			if hybrid and service.selectedInstanceType == "broadcast" and not includeDrm and requireFtaVerification:
+			if hybrid and service.matchedRef and not includeDrm and requireFtaVerification:
 				# Work on a copy: the logical channel and its EPG remain DVB.
 				alternative = copy(service)
 				ipRef = self.ipRef(alternative, includeIp, False, ipServiceType, True)
 				if ipRef and alternative.selectedInstance.url.startswith(("http://", "https://")):
 					ipFields = ipRef.split(":", 11)
-					for broadcast in getattr(service, "matchedRefs", None) or [ref]:
+					for broadcast in getattr(service, "matchedRefs", None) or [service.matchedRef]:
 						fields = broadcast.split(":")[:10]
 						fields[0], fields[9] = ipFields[0], ipFields[9]
 						target = ":".join(fields + [quote(playbackUrl(alternative.selectedInstance), safe="/"), ipFields[11]])
@@ -5169,6 +5207,7 @@ class DvbIManager:
 						"name": service.name,
 						"provider": service.provider,
 						"country": service.country,
+						"language": service.language,
 						"regions": service.regions,
 						"lcn": service.lcn,
 						"flags": service.flags,
@@ -5523,6 +5562,7 @@ class DvbIManager:
 		includeIp = bool(options.get("include_ip", True))
 		includeDrm = bool(options.get("include_drm", False))
 		preferBroadcast = bool(options.get("prefer_broadcast", True))
+		createBouquets = bool(options.get("create_bouquets", True))
 		ipServiceType = str(options.get("ip_service_type", "4097") or "4097")
 		downloadLogos = bool(options.get("download_logos", True))
 		installPicons = bool(options.get("install_picons", True))
@@ -5673,7 +5713,7 @@ class DvbIManager:
 				else:
 					service.status = "broadcast_match_available"
 
-		log(_("Writing bouquet"))
+		log(_("Preparing channel lists and fallback mappings"))
 		writer = BouquetWriter(self.enigma2Dir)
 		bouquetResult = writer.write(
 			serviceList,
@@ -5691,7 +5731,7 @@ class DvbIManager:
 			hybrid=bool(options.get("hybrid", False)),
 			labelVod=bool(options.get("label_vod", False)),
 		)
-		if options.get("native_bouquets") and not bouquetResult["added"]:
+		if createBouquets and options.get("native_bouquets") and not bouquetResult["added"]:
 			raise ValueError(
 				_("No playable free-to-air channels found. Check reception, region and installed players. Existing channel lists were not changed.")
 			)
@@ -5728,17 +5768,20 @@ class DvbIManager:
 		playbackMapPath = updatePlaybackMap(serviceList, includeDrm=includeDrm)
 
 		nativeBouquets = None
-		if options.get("native_bouquets"):
+		if createBouquets and options.get("native_bouquets"):
 			log(_("Preparing channel lists for Enigma2"))
 			nativeBouquets = writer.nativePayload(bouquetResult)
 			# Old tokens must remain resolvable if the subsequent native
 			# handoff fails. They can be garbage-collected after a successful
 			# receiver-side commit; never unlink them before the main-loop commit.
-		else:
+		elif createBouquets:
 			log(_("Committing DVB-I bouquet"))
 			bouquetResult = writer.commitPrepared(bouquetResult)
 			removeStalePlaybackTokens()
-		bouquetResult["commit_state"] = "prepared" if nativeBouquets is not None else "committed"
+		bouquetResult["commit_state"] = ("prepared" if nativeBouquets is not None else "committed") if createBouquets else "not_requested"
+		if not createBouquets:
+			for field in ("added", "services_written_tv", "services_written_radio", "broadcast_written", "ip_written"):
+				bouquetResult[field] = 0
 
 		report = buildReport(
 			serviceList,
@@ -5784,6 +5827,10 @@ class DvbIManager:
 			log(_("Could not write optional import metadata: {0}").format(error))
 
 		result = {
+			"create_bouquets": createBouquets,
+			# Independent of bouquet mode: changing IP/broadcast preference must
+			# update the same provider/region mapping rather than leave stale pairs.
+			"fallback_scope": jsonDumps([getattr(serviceList, "listId", "") or baseServiceListUrl(url), serviceList.region or region], ensure_ascii=True),
 			"hybrid_services": bouquetResult.get("hybrid_services", []),
 			"service_list_name": serviceList.name,
 			"source_url": url,
@@ -5837,7 +5884,10 @@ class DvbIManager:
 		if nativeBouquets is not None:
 			result["native_bouquets"] = nativeBouquets
 			result["bouquets_committed"] = False
-		log(_("Channel list ready: {0} TV, {1} radio").format(result["services_written_tv"], result["services_written_radio"]))
+		if createBouquets:
+			log(_("Channel list ready: {0} TV, {1} radio").format(result["services_written_tv"], result["services_written_radio"]))
+		else:
+			log(_("Fallback mappings prepared: {0}").format(len(result["hybrid_services"])))
 		return result
 
 	def discoverRegions(self, url, options=None):
@@ -6233,7 +6283,7 @@ def runSync(job, logger=None):
 		result["action"] = action
 		result["catalog_only"] = False
 		result["sync_complete"] = not (result.get("http_stale") or result.get("epg_services_failed") or result.get("epg_services_truncated"))
-		result["needs_bouquet_reload"] = (
+		result["needs_bouquet_reload"] = result.get("create_bouquets", True) and (
 			not result.get("bouquet_unchanged", False) or result.get("bouquets_tv_changed", False) or result.get("bouquets_radio_changed", False)
 		)
 		return result

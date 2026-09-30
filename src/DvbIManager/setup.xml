@@ -5,14 +5,18 @@
 		<if conditional="bool(config.plugins.dvbi.registry_offering_id.value)">
 			<item level="0" text="Region" description="Choose a region offered by this channel list, or keep the provider's default selection.">config.plugins.dvbi.region</item>
 		</if>
+		<item level="0" text="Create additional DVB-I bouquets" description="Create TV and radio bouquets in the provider's channel order. Disable this to update global fallback mappings for your existing bouquets only. Existing bouquets are kept.">config.plugins.dvbi.createBouquets</item>
 		<item level="0" text="Advanced settings" description="Show additional filters and playback settings. These are not needed for normal channel-list creation.">config.plugins.dvbi.advanced</item>
 		<if conditional="config.plugins.dvbi.advanced.value">
 			<item level="0" text="DVB-I enabled" description="Enable DVB-I channel-list updates and registered internet alternatives.">config.plugins.dvbi.enabled</item>
 			<item level="0" text="Provider" description="Optionally narrow the available lists to one provider.">config.plugins.dvbi.registry_provider</item>
 			<item level="0" text="Language" description="All languages accepts every language; choosing a language filters the available lists.">config.plugins.dvbi.registry_language</item>
 			<item level="0" text="Delivery system" description="Optionally filter lists by their announced reception methods.">config.plugins.dvbi.registry_delivery</item>
-			<item level="0" text="Use broadcast channels" description="Yes prefers matching free-to-air satellite, cable or terrestrial channels. No creates an IP-only list and skips channels without a usable free-to-air stream. Regions and reception modes have separate bouquets.">config.plugins.dvbi.prefer_broadcast</item>
-			<item level="0" text="Use internet when tuner is busy" description="Use the verified DVB-I version of the same channel when no tuner is free. A new recording can move live TV to the internet; recordings and timeshift are not moved.">config.plugins.dvbi.hybrid</item>
+			<if conditional="config.plugins.dvbi.createBouquets.value">
+				<item level="0" text="Use broadcast channels" description="Yes prefers matching free-to-air satellite, cable or terrestrial channels. No creates an IP-only list and skips channels without a usable free-to-air stream. Regions and reception modes have separate bouquets.">config.plugins.dvbi.prefer_broadcast</item>
+			</if>
+			<item level="0" text="Use internet fallback" description="Use a registered internet alternative when no tuner is free or reception fails. This applies in every bouquet. Recordings and timeshift are not moved.">config.plugins.dvbi.hybrid</item>
+			<item level="0" text="Prefer service-list fallbacks" description="Prefer automatic DVB-I mappings over manual assignments. Disable this to give manual mappings priority. Both mappings are kept when updates run. Press EPG to edit manual mappings.">config.plugins.dvbi.preferAutomatic</item>
 			<item level="0" text="IP player" description="Automatic prefers GStreamer 4097 and falls back to a suitable installed player. A fixed selection only imports streams supported by that player. Native DVB playback requires verified HTTP transport streams.">config.plugins.dvbi.ip_service_type</item>
 			<item level="0" text="Download picon logos" description="Download channel logos in the background and install them in the normal Enigma2 picon paths. Existing picons are kept.">config.plugins.dvbi.download_logos</item>
 			<item level="0" text="Synchronise now/next EPG" description="Load programme information into the normal Enigma2 programme guide.">config.plugins.dvbi.sync_epg_now_next</item>

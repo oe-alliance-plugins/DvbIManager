@@ -7,26 +7,32 @@
 
 from collections import deque
 from gettext import dgettext
-from os.path import exists as pathExists, isfile, join, normcase, normpath
+from glob import glob
+from os.path import exists as pathExists, join, normcase, normpath
 from time import localtime, mktime, time
 from urllib.parse import unquote
 from weakref import ref as weakRef
 
 from Components.ActionMap import HelpableActionMap
 from Components.International import international
+from Components.Label import Label
+from Components.MenuList import MenuList
+from Components.MultiContent import MultiContentEntryRectangle, MultiContentEntryText
 from Components.Renderer import LcdPicon, Picon
 from Components.Sources.StaticText import StaticText
 from Components.Task import Job, PythonTask, Task, job_manager as jobManager
 from Components.config import ConfigSelection, ConfigSubsection, ConfigText, ConfigYesNo, config, configfile
 from Plugins.Plugin import PluginDescriptor
+from Screens.Screen import Screen
 from Screens.Setup import Setup
 from Screens.TextBox import TextBox
 from Scheduler import SchedulerEntry, TIMERTYPE, addFunctionTimer, functionTimers
+from skin import parseFont
 
-from enigma import eDVBDB, eEPGCache, eServiceReference, eTimer, getDesktop, setDVBIFallbackServices
+from enigma import RT_VALIGN_CENTER, eDVBDB, eEPGCache, eListboxPythonMultiContent, eServiceCenter, eServiceReference, eTimer, getDesktop, setDVBIFallbackServices
 
-from . import _, __version__, PLUGIN_DOMAIN
-from .DvbI import DvbIManager, REGISTRY_CATALOG_SCHEMA, loadSourceConfig, getRegistrySourceList, runSync, getAvailablePlayers, installBouquets, refreshPicons, regionCatalogPath, withRegionId, atomicWriteJson, readJson
+from . import _, __version__, PluginLanguageDomain
+from .DvbI import DvbIManager, FallbackStore, REGISTRY_CATALOG_SCHEMA, loadSourceConfig, getRegistrySourceList, runSync, getAvailablePlayers, installBouquets, refreshPicons, regionCatalogPath, withRegionId, atomicWriteJson, readJson
 
 
 PLUGIN_VERSION = __version__
@@ -56,6 +62,8 @@ config.plugins.dvbi.registry_offering_id = ConfigSelection(default="", choices=[
 config.plugins.dvbi.region = ConfigSelection(default="", choices=[("", _("Default / no regional selection"))])
 config.plugins.dvbi.postcode = ConfigText(default="", fixed_size=False)
 config.plugins.dvbi.prefer_broadcast = ConfigYesNo(default=True)
+config.plugins.dvbi.createBouquets = ConfigYesNo(default=True)
+config.plugins.dvbi.preferAutomatic = ConfigYesNo(default=True)
 config.plugins.dvbi.hybrid = ConfigYesNo(default=True)
 config.plugins.dvbi.ip_service_type = ConfigSelection(default="auto", choices=IP_SERVICE_TYPE_CHOICES)
 config.plugins.dvbi.download_logos = ConfigYesNo(default=True)
@@ -221,7 +229,9 @@ def importOptions(force):
 		"show_other_regions": False,
 		"include_ip": True,
 		"prefer_broadcast": config.plugins.dvbi.prefer_broadcast.value,
-		"hybrid": bool(config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value),
+		# Collect alternatives even when playback fallback is temporarily disabled.
+		"hybrid": True,
+		"create_bouquets": config.plugins.dvbi.createBouquets.value,
 		"ip_service_type": config.plugins.dvbi.ip_service_type.value,
 		"automatic_player": config.plugins.dvbi.ip_service_type.value == "auto",
 		"available_players": getAvailablePlayers(),
@@ -396,56 +406,42 @@ class DvbIPublishTask(Task):
 PLAYBACK_CACHE = {}
 
 
-def activateHybrid(result=None, shutdown=False):
+def activateHybrid(result=None, shutdown=False, manual=None):
 	"""Publish a small, already-probed map; core never reads plugin settings."""
-	if shutdown or not (config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value and config.plugins.dvbi.prefer_broadcast.value):
+	manualUpdate = manual is not None
+	if shutdown:
 		setDVBIFallbackServices([])
 		return
+	if result is None and not manualUpdate and not (config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value):
+		return setDVBIFallbackServices([])
 	try:
-		cached = {}
-		for directory in metadataDirectories():
-			path = join(directory, "hybrid_map.json")
-			if isfile(path):
-				cached = readJson(path, default={})
-				break
-		if cached and cached.get("version") != 2:
-			raise ValueError(_("Invalid DVB-I fallback cache version; create the channel list again"))
-		lists = cached.get("lists", {})
-		if not isinstance(lists, dict):
-			raise ValueError(_("Invalid DVB-I per-list fallback cache"))
-		lists = dict(lists)
+		store = FallbackStore()
+		lists, savedManual = store.load()
+		if manual is None:
+			manual = savedManual
 		if result is not None and "hybrid_services" in result:
-			key = result.get("bouquet_tv")
-			if not isinstance(key, str) or not key.startswith("userbouquet.dvbi_") or not key.endswith(".tv") or "/" in key or "\\" in key:
-				raise ValueError(_("Missing DVB-I channel-list identity"))
-			# Replace only this list, including a deliberately empty mapping.
+			key = result["fallback_scope"]
+			# Replace only this provider/region, never another scope or manual entries.
 			lists[key] = result["hybrid_services"]
-		pairs = []
-		for services in lists.values():
-			if not isinstance(services, list):
-				raise ValueError(_("Invalid DVB-I per-list fallback entries"))
-			pairs.extend(services)
-		# Ambiguous cross-list matches must not silently choose another programme.
-		mapping = {}
-		conflicts = set()
-		for source, target in pairs:
-			if source in mapping and mapping[source] != target:
-				conflicts.add(source)
-			mapping[source] = target
-		pairs = [(source, target) for source, target in mapping.items() if source not in conflicts]
-		count = setDVBIFallbackServices(pairs)
+			store.sources[key] = {"name": result.get("service_list_name", ""), "url": result.get("source_url", "")}
+		mapping = store.merge(lists, manual, config.plugins.dvbi.preferAutomatic.value)
+		count = setDVBIFallbackServices(list(mapping.items()))
 		if count < 0:
 			raise ValueError(_("Invalid DVB-I fallback map"))
-		if result is not None:
-			manager = DvbIManager(dataDir=config.plugins.dvbi.cache_dir.value)
-			atomicWriteJson(join(manager.metadataDir, "hybrid_map.json"), {"version": 2, "lists": lists})
-			result["hybrid_services_active"] = count
-	except Exception as error:
-		if result is not None:
-			# A rejected new import must not discard other committed lists.
-			activateHybrid()
-		else:
+		if not (config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value):
 			setDVBIFallbackServices([])
+			count = 0
+		if result is not None or manual != savedManual:
+			atomicWriteJson(store.path, {"version": 1, "automatic": lists, "manual": manual, "sources": store.sources})
+		if result is not None:
+			result["hybrid_services_active"] = count
+			result["hybrid_services_total"] = len(mapping)
+		return count
+	except Exception as error:
+		if result is not None or manualUpdate:
+			# Restore the last committed map after a failed disk write.
+			activateHybrid()
+			raise
 		print("[DvbIManager] Hybrid playback update failed: {0}".format(error))
 
 
@@ -462,6 +458,8 @@ def reloadBouquets(result):
 
 		refreshServiceList()
 		return
+	if "hybrid_services" in result:
+		activateHybrid(result)
 	if not result.get("needs_bouquet_reload"):
 		return
 	try:
@@ -742,6 +740,8 @@ def formatTaskResult(result):
 	if not result.get("ok"):
 		return _("DVB-I synchronisation failed:\n{0}").format(result.get("error", _("unknown task error")))
 	action = result.get("action")
+	if result.get("create_bouquets") is False:
+		return _("Fallback mappings updated: {0}. Existing bouquets were not changed.").format(result.get("hybrid_services_total", 0))
 	if action == "discover_registry":
 		text = _("Available channel lists updated: {0}. Choose a list and, if offered, your region.").format(result.get("offerings_total", 0))
 		if result.get("source_errors"):
@@ -813,6 +813,8 @@ def showTaskResult(session, result):
 			text = _("DVB-I: {0} available channel lists updated.").format(result.get("offerings_total", 0))
 		elif action == "discover_regions":
 			text = _("DVB-I: Regions for the selected channel list updated.")
+		elif result.get("create_bouquets") is False:
+			text = _("Fallback mappings updated: {0}. Existing bouquets were not changed.").format(result.get("hybrid_services_total", 0))
 		else:
 			text = _("DVB-I: {0}{1} — {2} TV, {3} radio.").format(
 				result.get("service_list_name", _("Channel list updated")),
@@ -939,6 +941,431 @@ def newSchedule(clock=(3, 0)):
 	return entry
 
 
+def isFallbackSource(service):
+	return bool(service and service.valid() and service.type == 1 and not service.getPath() and not service.flags & (eServiceReference.isDirectory | eServiceReference.isMarker | eServiceReference.isGroup))
+
+
+def fallbackBouquets(ip=False, radio=None):
+	"""Use E2's bouquet database, without tuning or parsing bouquet files."""
+	center = eServiceCenter.getInstance()
+	players = {int(player) for player in getAvailablePlayers()} if ip else set()
+	result = []
+	for kind in ("tv", "radio"):
+		if radio is not None and radio != (kind == "radio"):
+			continue
+		root = eServiceReference('1:7:0:0:0:0:0:0:0:0:FROM BOUQUET "bouquets.%s" ORDER BY bouquet' % kind)
+		listing = center.list(root)
+		for reference, name in listing.getContent("SN", True) if listing else []:
+			listing = center.list(eServiceReference(reference))
+			channels = []
+			for channel, label in listing.getContent("SN", True) if listing else []:
+				ref = eServiceReference(channel)
+				if ip:
+					eligible = not ref.flags and ref.type in players and ref.getPath().startswith(("http://", "https://", "dvbi://"))
+				else:
+					eligible = isFallbackSource(ref)
+				if eligible:
+					channels.append((label, channel))
+			if channels:
+				result.append((name, channels, kind == "radio"))
+	return result
+
+
+class DvbIServiceInfo(TextBox):
+	skin = """
+	<screen name="DvbIServiceInfo" position="center,center" size="1200,620" resolution="1280,720">
+		<widget name="text" position="10,10" size="1180,550" font="Regular;20" halign="left" valign="top" scrollbarMode="showOnDemand" />
+		<eLabel position="10,582" size="5,28" backgroundColor="#ff0000" />
+		<widget source="key_red" render="Label" position="22,582" size="270,28" font="Regular;22" transparent="1" />
+	</screen>"""
+
+	def __init__(self, session, text, title):
+		TextBox.__init__(self, session, text, title=title)
+		self.skinName = "DvbIServiceInfo"
+		self["key_red"] = StaticText(_("Close"))
+		self["closeActions"] = HelpableActionMap(self, ["ColorActions", "InfoActions"], {
+			"red": (self.close, _("Close")),
+			"info": (self.close, _("Close")),
+		}, prio=-1)
+
+
+class DvbIFallbackSetup(Screen):
+	"""Two bouquet-filtered service lists; selection never changes live playback."""
+	skin = """
+	<screen name="DvbIFallbackSetup" position="center,center" size="1200,620" title="DVB-I fallback mappings" resolution="1280,720">
+		<widget name="dvbTitle" position="10,8" size="575,48" font="Regular;20" />
+		<widget name="ipTitle" position="615,8" size="575,48" font="Regular;20" />
+		<widget name="dvb" position="10,64" size="575,336" font="Regular;22" itemHeight="28" scrollbarMode="showOnDemand" />
+		<widget name="ip" position="615,64" size="575,336" font="Regular;22" itemHeight="28" scrollbarMode="showOnDemand" />
+		<widget name="mapping" position="10,412" size="1180,120" font="Regular;21" />
+		<widget name="hint" position="10,540" size="1180,28" font="Regular;19" />
+		<eLabel position="10,582" size="5,28" backgroundColor="#ff0000" />
+		<widget source="key_red" render="Label" position="22,582" size="270,28" font="Regular;22" transparent="1" />
+		<eLabel position="310,582" size="5,28" backgroundColor="#00ff00" />
+		<widget source="key_green" render="Label" position="322,582" size="270,28" font="Regular;22" transparent="1" />
+		<eLabel position="610,582" size="5,28" backgroundColor="#ffff00" />
+		<widget source="key_yellow" render="Label" position="622,582" size="270,28" font="Regular;22" transparent="1" />
+		<eLabel position="910,582" size="5,28" backgroundColor="#0000ff" />
+		<widget source="key_blue" render="Label" position="922,582" size="268,28" font="Regular;22" transparent="1" />
+	</screen>"""
+
+	def __init__(self, session, service=None):
+		Screen.__init__(self, session, enableHelp=True)
+		self.setTitle(_("DVB-I fallback mappings"))
+		self.initialService = service
+		self.source = None
+		self.target = None
+		self.radio = None
+		self.focus = "dvb"
+		self.roots = {"dvb": None, "ip": None}
+		self.bouquets = {"dvb": fallbackBouquets(), "ip": fallbackBouquets(ip=True)}
+		self.automatic = {}
+		self.manual = {}
+		self.automaticSources = {}
+		self.ipSources = {}
+		self.mappedPath = None
+		self.mappedTarget = None
+		self.ipPaths = {}
+		for bouquet in self.bouquets["ip"]:
+			for name, reference in bouquet[1]:
+				if reference not in self.ipPaths:
+					ref = eServiceReference(reference)
+					path = ref.getPath()
+					self.ipPaths[reference] = resolveDvbiService(ref)[0] if path.startswith("dvbi://") else path
+		for pane in ("dvb", "ip"):
+			self[pane] = MenuList([], content=eListboxPythonMultiContent)
+			self[pane].l.setBuildFunc(lambda *choice, pane=pane: self.buildServiceEntry(pane, *choice))
+			self[pane + "Title"] = Label()
+		self["mapping"] = Label()
+		self["hint"] = Label(_("LEFT/RIGHT: list · OK: open · CH+/CH−: page · BLUE: bouquets · INFO: details"))
+		self["key_red"] = StaticText(_("Close"))
+		self["key_green"] = StaticText(_("Assign fallback"))
+		self["key_yellow"] = StaticText(_("Remove manual"))
+		self["key_blue"] = StaticText(_("Bouquets"))
+		self["actions"] = HelpableActionMap(self, ["ColorActions", "OkCancelActions", "NavigationActions", "InfoActions"], {
+			"cancel": (self.close, _("Close the mapping editor")),
+			"red": (self.close, _("Close the mapping editor")),
+			"green": (self.saveMapping, _("Assign the selected IPTV channel to the selected DVB channel")),
+			"yellow": (self.removeMapping, _("Remove the manual assignment for the selected DVB channel")),
+			"blue": (self.showBouquets, _("Choose another bouquet in the active list")),
+			"ok": (self.keySelect, _("Open the selected bouquet or switch to the IPTV list")),
+			"info": (self.showServiceInfo, _("Show service reference, stream URL and service-list origin")),
+			"left": (lambda: self.setFocus("dvb"), _("Select DVB channels")),
+			"right": (lambda: self.setFocus("ip"), _("Select IPTV channels")),
+			"up": (lambda: self[self.focus].goLineUp(), _("Move up")),
+			"down": (lambda: self[self.focus].goLineDown(), _("Move down")),
+			"pageUp": (lambda: self[self.focus].goPageUp(), _("Previous page")),
+			"pageDown": (lambda: self[self.focus].goPageDown(), _("Next page")),
+			"top": (lambda: self[self.focus].goTop(), _("First entry")),
+			"bottom": (lambda: self[self.focus].goBottom(), _("Last entry")),
+		}, prio=-1, description=_("DVB-I mapping actions"))
+		self["dvb"].onSelectionChanged.append(self.sourceChanged)
+		self["ip"].onSelectionChanged.append(self.targetChanged)
+		self.onLayoutFinish.append(self.layoutFinished)
+		self.onShown.append(self.refreshMappings)
+
+	def layoutFinished(self):
+		for pane in ("dvb", "ip"):
+			font = next((value for key, value in self[pane].skinAttributes if key == "font"), "Regular;22")
+			self[pane].l.setFont(0, parseFont(font, self.scale))
+			self[pane].enableAutoNavigation(False)
+			self.fillPane(pane)
+		if self.initialService is not None:
+			reference = self.initialService.toCompareString()
+			for bouquet in self.bouquets["dvb"]:
+				index = next((index for index, item in enumerate(bouquet[1]) if eServiceReference(item[1]).toCompareString() == reference), None)
+				if index is not None:
+					self.fillPane("dvb", bouquet)
+					self["dvb"].moveToIndex(index + 1)
+					break
+			else:
+				center = eServiceCenter.getInstance()
+				info = center.info(self.initialService)
+				name = info.getName(self.initialService) if info else reference
+				self.fillPane("dvb", (_("Selected channel"), [(name, reference)], self.initialService.getUnsignedData(0) in (2, 10)))
+				self["dvb"].moveToIndex(1)
+			self.setFocus("ip")
+		else:
+			self.setFocus("dvb")
+		self.sourceChanged()
+
+	def buildServiceEntry(self, pane, *choice):
+		size = self[pane].l.getItemSize()
+		width, height = size.width(), size.height()
+		padding = max(4, height // 5)
+		color = None
+		if isinstance(choice[1], str):
+			if pane == "dvb":
+				source = eServiceReference(choice[1]).toCompareString()
+				if self.source is not None and source == self.source.toCompareString():
+					color = 0x0080FF if self.mappedTarget else 0xFFD040
+					if self.focus == "ip":
+						color = 0xFF4040
+			elif choice[1] == self.mappedTarget:
+				color = 0x0080FF
+			elif self.focus == "ip" and choice[1] == self.target and self.source is not None:
+				color = 0xFF4040
+		entry = [None]
+		if color is not None:
+			entry.append(MultiContentEntryRectangle(size=(width, height), borderWidth=max(2, height // 14), borderColor=color, borderColorSelected=color))
+		entry.append(MultiContentEntryText(pos=(padding, 0), size=(width - 2 * padding, height), font=0, flags=RT_VALIGN_CENTER, text=choice[0]))
+		return entry
+
+	def fillPane(self, pane, bouquet=None):
+		self.roots[pane] = bouquet
+		if bouquet is None:
+			choices = [item for item in self.bouquets[pane] if pane == "dvb" or self.radio is None or item[2] == self.radio]
+		else:
+			choices = [(".. " + _("Bouquets"), None)] + bouquet[1]
+		self[pane].setList(choices)
+		self[pane].moveToIndex(0)
+		self.setFocus(self.focus)
+
+	def setFocus(self, pane):
+		changed = self.focus != pane
+		self.focus = pane
+		if changed and pane == "ip":
+			self.selectMappedTarget()
+		for name, label in (("dvb", _("DVB channels")), ("ip", _("IPTV channels"))):
+			self[name].selectionEnabled(name == pane)
+			self[name].l.invalidate()
+			bouquet = self.roots[name]
+			self[name + "Title"].setText(("▶ " if name == pane else "") + label + " — " + (bouquet[0] if bouquet else _("Bouquets")))
+
+	def selectMappedTarget(self):
+		source = self.source.toCompareString() if self.source is not None else None
+		automatic, manual = self.automatic.get(source), self.manual.get(source)
+		target = (automatic or manual) if config.plugins.dvbi.preferAutomatic.value else (manual or automatic)
+		self.mappedPath = eServiceReference(target).getPath() if target else None
+		self.mappedTarget = None
+		if target:
+			# IDs in a fallback inherit the DVB source; match the playback URL instead.
+			bouquets = [self.roots["ip"]] if self.roots["ip"] is not None else []
+			bouquets += [bouquet for bouquet in self.bouquets["ip"] if bouquet not in bouquets]
+			for bouquet in bouquets:
+				if bouquet[2] != self.radio:
+					continue
+				index = next((index for index, item in enumerate(bouquet[1]) if self.ipPaths.get(item[1]) == self.mappedPath), None)
+				if index is not None:
+					self.mappedTarget = bouquet[1][index][1]
+					if self.roots["ip"] != bouquet:
+						self.fillPane("ip", bouquet)
+					self["ip"].moveToIndex(index + 1)
+					break
+			else:
+				# Mapping-only imports need no IPTV bouquet to display their target.
+				ref = eServiceReference(target)
+				self.mappedTarget = target
+				self.ipPaths[target] = self.mappedPath
+				self.fillPane("ip", (_("Selected channel"), [(ref.getName() or self.mappedPath, target)], self.radio))
+				self["ip"].moveToIndex(1)
+		self["ip"].l.invalidate()
+
+	def showBouquets(self):
+		self.fillPane(self.focus)
+
+	def keySelect(self):
+		choice = self[self.focus].getCurrent()
+		if not choice:
+			return
+		if choice[1] is None:
+			self.showBouquets()
+		elif isinstance(choice[1], list):
+			self.fillPane(self.focus, choice)
+		elif self.focus == "dvb":
+			self.setFocus("ip")
+
+	def sourceChanged(self):
+		choice = self["dvb"].getCurrent()
+		self.source = eServiceReference(choice[1]) if choice and isinstance(choice[1], str) else None
+		if self.source is not None:
+			radio = self.source.getUnsignedData(0) in (2, 10)
+			if self.radio != radio:
+				self.radio = radio
+				self.fillPane("ip")
+		self.selectMappedTarget()
+		self.updateMappingText()
+
+	def targetChanged(self):
+		# The content cursor visits each row while painting; retain the actual selection.
+		choice = self["ip"].getCurrent()
+		self.target = choice[1] if choice and isinstance(choice[1], str) else None
+
+	def refreshMappings(self):
+		try:
+			previous = self.automatic, self.manual
+			store = FallbackStore()
+			lists, self.manual = store.load()
+			self.automatic = FallbackStore.merge(lists, {})
+			self.automaticSources = {}
+			self.ipSources = {}
+			for scope, services in lists.items():
+				origin = store.sources.get(scope)
+				if not origin:
+					continue
+				for source, target in services:
+					if self.automatic.get(source) == target:
+						self.automaticSources.setdefault(source, []).append(origin)
+					origins = self.ipSources.setdefault(eServiceReference(target).getPath(), [])
+					if origin not in origins:
+						origins.append(origin)
+			if previous != (self.automatic, self.manual):
+				self.selectMappedTarget()
+			self["dvb"].l.invalidate()
+			self.updateMappingText()
+		except (OSError, ValueError, TypeError) as error:
+			self.session.showError(str(error), timeout=8)
+
+	def updateMappingText(self):
+		if self.source is None:
+			text = _("Choose a DVB bouquet and channel on the left, then the matching IPTV channel on the right.")
+		else:
+			source = self.source.toCompareString()
+			text = self["dvb"].getCurrent()[0]
+			for label, target in ((_("Service list"), self.automatic.get(source)), (_("Manual"), self.manual.get(source))):
+				if target:
+					ref = eServiceReference(target)
+					name = ref.getName() or ref.getPath().split("/", 3)[2]
+					if label == _("Service list"):
+						origins = "; ".join(origin.get("name") or origin.get("url", "") for origin in self.automaticSources.get(source, []))
+						name += " — " + (origins or _("Service list unknown"))
+				else:
+					name = _("Not assigned")
+				text += "\n%s: %s" % (label, name)
+			text += "\n" + (_("Service-list mappings have priority.") if config.plugins.dvbi.preferAutomatic.value else _("Manual mappings have priority."))
+		if not (config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value):
+			text += "\n" + _("Internet fallback is currently disabled in the settings.")
+		self["mapping"].setText(text)
+
+	def showServiceInfo(self):
+		choice = self[self.focus].getCurrent()
+		if not choice or not isinstance(choice[1], str):
+			return
+		bouquet = self.roots[self.focus]
+		text = [choice[0], _("Bouquet: {0}").format(bouquet[0])]
+		entries = [(_("Selected channel"), choice[1], None)]
+		if self.focus == "dvb":
+			source = eServiceReference(choice[1]).toCompareString()
+			text.append(_("Service-list mappings have priority.") if config.plugins.dvbi.preferAutomatic.value else _("Manual mappings have priority."))
+			for title, target, origins in ((_("Service-list fallback"), self.automatic.get(source), self.automaticSources.get(source, [])), (_("Manual fallback"), self.manual.get(source), [])):
+				if target:
+					entries.append((title, target, origins))
+				else:
+					text.append("%s: %s" % (title, _("Not assigned")))
+		references = {reference for title, reference, origins in entries}
+		urls = set()
+		for title, reference, origins in entries:
+			ref = eServiceReference(reference)
+			path = ref.getPath()
+			url = self.ipPaths.get(reference) if path.startswith("dvbi://") else path
+			text.extend(("", title, _("Service reference:"), reference, _("Service type: {0}").format(ref.type)))
+			if path:
+				if url:
+					urls.add(url)
+				text.extend((_("Stream URL:"), url or _("No cached IPTV playback target found.")))
+				if origins is None:
+					origins = self.ipSources.get(url, [])
+				for origin in origins:
+					text.extend((_("Service list: {0}").format(origin.get("name") or _("Service list unknown")), _("Service-list URL:"), origin.get("url") or _("Not available")))
+		identities = {(entry.get("list_id"), entry.get("dvbi_id")) for entry in PLAYBACK_CACHE.values() if entry.get("enigma2_ref") in references or entry.get("url") in urls}
+		directories = metadataDirectories()
+		baseText = "\n".join(text)
+		dialog = self.session.open(DvbIServiceInfo, baseText + "\n\n" + _("Loading cached service-list information…"), title=_("DVB-I service details"))
+		dialogRef = weakRef(dialog)
+		job = Job(_("Read cached DVB-I service information"))
+		job.details = []
+
+		def loadDetails():
+			seen = set()
+			for directory in directories:
+				for path in sorted(glob(join(directory, "lists", "*.json"))):
+					data = readJson(path)
+					serviceList = data.get("service_list", {})
+					listId = serviceList.get("id") or serviceList.get("source_url")
+					for service in data.get("services", []):
+						identity = (listId, service.get("dvbi_id"))
+						matched = identity in identities or any(service.get(key) in references for key in ("matched_ref", "selected_ref")) or any(instance.get("url") in urls for instance in service.get("instances", []))
+						if not matched or identity in seen:
+							continue
+						seen.add(identity)
+						details = ["", _("Cached service-list information"), _("Service list: {0}").format(serviceList.get("name") or listId)]
+						for key, label in (("provider", _("List provider")), ("region", _("Region")), ("version", _("List version")), ("source_url", _("Service-list URL"))):
+							value = serviceList.get(key)
+							if value is not None and value != "":
+								details.append("%s: %s" % (label, value))
+						for key, label in (("name", _("Channel name")), ("dvbi_id", _("DVB-I service ID")), ("provider", _("Provider")), ("country", _("Country")), ("language", _("Language")), ("lcn", _("Channel number (LCN)")), ("regions", _("Regions")), ("service_type_term", _("Signalled service type")), ("flags", _("Signalled features")), ("content_guide_source_ref", _("Content guide source")), ("content_guide_service_ref", _("Content guide service ID")), ("logo_urls", _("Logo URLs"))):
+							value = service.get(key)
+							if isinstance(value, list):
+								value = ", ".join(str(item) for item in value)
+							if value is not None and value != "":
+								details.append("%s: %s" % (label, value))
+						for instance in service.get("instances", []):
+							details.extend(("", _("Signalled delivery: {0}").format(instance.get("type", ""))))
+							for key, label in (("priority", _("Priority")), ("content_type", _("Content type")), ("url", _("URL (service list)")), ("sid", "SID"), ("tsid", "TSID"), ("onid", "ONID")):
+								value = instance.get(key)
+								if value is not None and value != "":
+									details.append("%s: %s" % (label, value))
+							if instance.get("drm"):
+								details.append(_("DRM signalled (not supported)"))
+							if instance.get("hbbtv"):
+								details.append(_("HbbTV signalled"))
+						job.details.extend(details)
+
+		def detailsLoaded(completed, task=None, problems=()):
+			screen = dialogRef()
+			if screen is not None and getattr(screen, "execing", False):
+				details = completed.details if not problems else []
+				screen["text"].setText(baseText + "\n" + "\n".join(details or ["", _("No additional service-list information is cached.")]))
+			return False
+
+		task = PythonTask(job, job.name)
+		task.work = loadDetails
+		jobManager.AddJob(job, onSuccess=detailsLoaded, onFail=detailsLoaded)
+
+	def saveMapping(self):
+		choice = self["ip"].getCurrent()
+		if self.source is None or not choice or not isinstance(choice[1], str):
+			self.session.showInfo(_("Select a DVB channel and an IPTV channel first."), timeout=5)
+			return
+		try:
+			target = eServiceReference(choice[1])
+			if target.getPath().startswith("dvbi://"):
+				url, error = resolveDvbiService(target)
+				if error or not url:
+					raise ValueError(error or _("No cached IPTV playback target found."))
+				target.setPath(url)
+			if not target.getPath().startswith(("http://", "https://")):
+				raise ValueError(_("Only HTTP(S) IPTV channels can be assigned."))
+			for field in range(7):
+				target.setUnsignedData(field, self.source.getUnsignedData(field))
+			target.setName(choice[0])
+			# Read again: a scheduled import may have finished while this screen was open.
+			unusedLists, manual = FallbackStore().load()
+			manual[self.source.toCompareString()] = target.toString()
+			activateHybrid(manual=manual)
+			self.refreshMappings()
+			self.session.showInfo(_("Manual fallback saved."), timeout=5)
+		except (OSError, ValueError, TypeError) as error:
+			self.session.showError(_("Could not save fallback mapping: {0}").format(error), timeout=8)
+
+	def removeMapping(self):
+		if self.source is None:
+			return
+		try:
+			unusedLists, manual = FallbackStore().load()
+			manual.pop(self.source.toCompareString(), None)
+			activateHybrid(manual=manual)
+			self.refreshMappings()
+			self.session.showInfo(_("Manual fallback removed. Any service-list mapping is retained."), timeout=5)
+		except (OSError, ValueError, TypeError) as error:
+			self.session.showError(_("Could not save fallback mapping: {0}").format(error), timeout=8)
+
+
+def channelFallbackSetup(session, service, **kwargs):
+	if isFallbackSource(service):
+		session.open(DvbIFallbackSetup, service=service)
+
+
 class DvbIManagerSetup(Setup):
 	"""Standard OpenATV setup.xml screen backed by persistent live choices."""
 
@@ -949,7 +1376,7 @@ class DvbIManagerSetup(Setup):
 		self.uiActive = True
 		self.updatingChoices = False
 		refreshRegistryConfigChoices()
-		Setup.__init__(self, session, setup="DvbIManager", plugin="Extensions/DvbIManager", PluginLanguageDomain=PLUGIN_DOMAIN)
+		Setup.__init__(self, session, setup="DvbIManager", plugin="Extensions/DvbIManager", PluginLanguageDomain=PluginLanguageDomain)
 		self.addSaveNotifier(activateHybrid)
 		# ConfigListActions maps red/green on key-down; ColorActions uses key-up.
 		# Replace only those save/cancel bindings, retaining normal config editing.
@@ -959,6 +1386,7 @@ class DvbIManagerSetup(Setup):
 		self["key_yellow"] = StaticText(_("Update available lists"))
 		self["key_blue"] = StaticText(_("Schedule updates"))
 		self["key_info"] = StaticText(_("Last result"))
+		self["key_epg"] = StaticText(_("Fallback mappings"))
 		self["dvbiActions"] = HelpableActionMap(
 			self,
 			["ColorActions", "OkCancelActions"],
@@ -982,6 +1410,9 @@ class DvbIManagerSetup(Setup):
 			},
 			prio=0,
 		)
+		self["dvbiEpgActions"] = HelpableActionMap(self, "EPGSelectActions", {
+			"epg": (self.openMappings, _("Assign internet fallbacks to DVB channels")),
+		}, prio=0)
 		SETUP_SCREENS.append(weakRef(self))
 		self.onClose.append(screenClosed)
 		self.onLayoutFinish.append(self.bootstrapLiveCatalogue)
@@ -989,6 +1420,10 @@ class DvbIManagerSetup(Setup):
 
 	def updateSaveButton(self):
 		self["key_red"].setText(_("Save") if self["config"].isChanged() else _("Cancel"))
+		self["key_green"].setText(_("Create channel list") if config.plugins.dvbi.createBouquets.value else _("Update fallback mappings"))
+
+	def openMappings(self):
+		self.session.open(DvbIFallbackSetup)
 
 	def createSetup(self, *args, **kwargs):
 		Setup.createSetup(self, *args, **kwargs)
@@ -1221,6 +1656,12 @@ def pluginIcon(width=None):
 def Plugins(**kwargs):
 	registerScheduler()
 	descriptors = [
+		PluginDescriptor(
+			name=_("Edit DVB-I fallback"),
+			where=PluginDescriptor.WHERE_CHANNEL_CONTEXT_MENU,
+			fnc=channelFallbackSetup,
+			serviceFilter=isFallbackSource,
+		),
 		PluginDescriptor(
 			name=_("DVB-I Manager"),
 			description=_("Create TV and radio channel lists from DVB-I"),
