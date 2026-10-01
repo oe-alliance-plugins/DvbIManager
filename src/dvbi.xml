@@ -9,6 +9,7 @@
 	<source id="bmt" url="https://dvb-i-germany-slr-staging.bmt-technik.de/query" optional="true" unregulated_test="true" />
 	<source id="sofia" url="https://csr.dtv.fi/api/query" optional="true" test_source="true" />
 	<source id="freeview-nz" url="https://slr.switch.tv/static/servicelists/dvbi_service_list.xml" kind="service_list" country="NZL" optional="true" test_source="true" />
+	<source id="freeview-nz-uat" url="https://slr.switch.tv/static/servicelists/dvbi_service_list_uat.xml" kind="service_list" country="NZL" optional="true" test_source="true" />
 	<source id="dvb-live" url="https://live-linear.dvb.org/videos/DVB-live-linear/tagdvborg2025dvblivelinear.xml" kind="service_list" optional="true" test_source="true" />
 	<source id="dvb-reference" url="https://dvb-i-reference.dvb.org/client/backend/servicelists/example.xml" kind="service_list" optional="true" test_source="true" />
 </dvbi>
