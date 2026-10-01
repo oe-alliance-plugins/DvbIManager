@@ -6,6 +6,7 @@ from copy import copy
 from datetime import datetime, time as datetimeTime, timezone
 from errno import ENOSYS, EOPNOTSUPP, EPERM, EXDEV
 from gzip import GzipFile
+from glob import glob
 from hashlib import sha1, sha256
 from io import BytesIO
 from ipaddress import ip_address as ipAddress
@@ -93,9 +94,13 @@ class FallbackStore:
 	def __init__(self, directory="/etc/enigma2"):
 		self.path = join(directory, "dvbi_fallbacks.json")
 		self.sources = {}
+		self.profiles = {}
+		self.applications = {}
 
 	def load(self):
 		self.sources = {}
+		self.profiles = {}
+		self.applications = {}
 		if not isfile(self.path):
 			return {}, {}
 		# A damaged file must not be treated as an empty, overwritable map.
@@ -104,7 +109,11 @@ class FallbackStore:
 		if not isinstance(stored, dict) or stored.get("version") != 1 or not isinstance(stored.get("automatic"), dict) or not isinstance(stored.get("manual"), dict):
 			raise ValueError(_("Invalid fallback mapping file: {0}").format(self.path))
 		self.sources = stored.get("sources", {})
-		if not isinstance(self.sources, dict) or any(not isinstance(source, dict) for source in self.sources.values()):
+		self.profiles = stored.get("profiles", {})
+		self.applications = stored.get("applications", {})
+		if not isinstance(self.sources, dict) or any(not isinstance(source, dict) for source in self.sources.values()) or not isinstance(self.profiles, dict) or any(not isinstance(entries, list) for entries in self.profiles.values()):
+			raise ValueError(_("Invalid fallback mapping file: {0}").format(self.path))
+		if not isinstance(self.applications, dict) or any(not isinstance(entries, list) for entries in self.applications.values()):
 			raise ValueError(_("Invalid fallback mapping file: {0}").format(self.path))
 		return stored["automatic"], stored["manual"]
 
@@ -141,7 +150,7 @@ class FetchResult:
 class ServiceListFetcher:
 	"""Download DVB-I service lists with If-Modified-Since/ETag support."""
 
-	USER_AGENT = "OpenATV-DvbIManager/0.3.6"
+	USER_AGENT = "OpenATV-DvbIManager/0.5.1"
 	MAX_WIRE_BYTES = 16 * 1024 * 1024
 	MAX_CONTENT_BYTES = 32 * 1024 * 1024
 	MAX_CACHE_AGE = 24 * 60 * 60
@@ -378,6 +387,8 @@ class DvbIServiceInstance:
 		# time-dependent decision whether an instance is currently available
 		# belongs in the instance selector, not in the XML parser.
 		self.availability = None
+		self.ftaVerified = False
+		self.playbackUnavailable = False
 		self.raw = {}
 
 
@@ -389,6 +400,7 @@ class DvbIService:
 		self.name = ""
 		self.provider = ""
 		self.country = ""
+		self.minimumAge = 0
 		self.language = ""
 		# DVB ServiceTypeCS is the authoritative TV/radio discriminator.
 		self.serviceTypeUri = ""
@@ -412,6 +424,8 @@ class DvbIService:
 		self.matchedRef = ""
 		self.matchedInstance = None
 		self.selectedRef = ""
+		self.ipRef = ""
+		self.epgRefs = []
 		self.selectedInstance = None
 		self.selectedInstanceType = ""
 		self.selectedPlayerType = ""
@@ -569,62 +583,67 @@ def parseDateTime(value):
 	return parsed
 
 
-def parseClock(value, now):
-	value = (value or "").strip()
-	if not value:
+def availabilityRules(periods):
+	"""Compact UTC rules for the core; None is unrestricted, [] unavailable."""
+	if periods is None:
 		return None
-	utc = value.endswith(("Z", "z"))
-	if utc:
-		value = value[:-1]
-	parsed = datetimeTime.fromisoformat(value)
-	reference = now.astimezone(timezone.utc) if utc else now
-	return reference, parsed
+	rules = []
+	for period in periods[:64]:
+		try:
+			start = parseDateTime(period.get("valid_from"))
+			end = parseDateTime(period.get("valid_to"))
+			if (start and start.timestamp() < 0) or (end and (end.timestamp() < 0 or (start and end <= start))):
+				continue
+			intervals = []
+			for interval in period.get("intervals", [])[:64]:
+				if interval.get("recurrence_explicit") and start is None:
+					continue
+				clocks = []
+				for key, default in (("start_time", "00:00:00Z"), ("end_time", "23:59:59.999Z")):
+					value = interval.get(key, default)
+					if not value.endswith("Z"):
+						raise ValueError("Availability clock must be UTC")
+					clock = datetimeTime.fromisoformat(value[:-1])
+					clocks.append((clock.hour * 3600 + clock.minute * 60 + clock.second) * 1000 + clock.microsecond // 1000)
+				days = interval.get("days", list(range(1, 8)))
+				mask = sum(1 << (day - 1) for day in set(days) if 1 <= day <= 7)
+				recurrence = int(interval.get("recurrence", 1))
+				if not 1 <= recurrence <= 0x7FFFFFFF:
+					continue
+				intervals.append((mask, *clocks, recurrence))
+			if period.get("intervals") and not intervals:
+				continue
+			rules.append((int(start.timestamp()) if start else 0, int(end.timestamp()) if end else 0, intervals))
+		except (TypeError, ValueError, OverflowError):
+			continue  # Invalid rules never expand a restricted service's airtime.
+	return rules
 
 
 def isInstanceAvailable(instance, now=None):
-	def intervalAvailable(interval, now):
-		try:
-			startValue = parseClock(interval.get("start_time"), now)
-			endValue = parseClock(interval.get("end_time"), now)
-		except (TypeError, ValueError):
-			return False
-		if not startValue and not endValue:
-			return True
-		reference = (startValue or endValue)[0]
-		current = reference.timetz().replace(tzinfo=None)
-		start = startValue[1] if startValue else datetimeTime.min
-		end = endValue[1] if endValue else datetimeTime.max
-		day = reference.isoweekday()
-		if current < end <= start:
-			day = 7 if day == 1 else day - 1
-		days = interval.get("days") or []
-		if days and day not in days:
-			return False
-		if end > start:
-			return start <= current < end
-		# An end at/before start denotes an interval crossing midnight.
-		return current >= start or current < end
-
-	periods = getattr(instance, "availability", None)
-	if periods is None:
+	rules = availabilityRules(instance.availability)
+	if rules is None:
 		return True
-	if not periods:
-		return False
 	now = now or datetime.now(timezone.utc)
 	if now.tzinfo is None:
 		now = now.replace(tzinfo=timezone.utc)
-	for period in periods:
-		try:
-			validFrom = parseDateTime(period.get("valid_from"))
-			validTo = parseDateTime(period.get("valid_to"))
-		except (TypeError, ValueError):
+	seconds = int(now.timestamp())
+	clock = seconds % 86400 * 1000
+	for validFrom, validTo, intervals in rules:
+		if (validFrom and seconds < validFrom) or (validTo and seconds >= validTo):
 			continue
-		if validFrom and now < validFrom.astimezone(now.tzinfo):
-			continue
-		if validTo and now > validTo.astimezone(now.tzinfo):
-			continue
-		intervals = period.get("intervals") or []
-		if not intervals or any(intervalAvailable(interval, now) for interval in intervals):
+		if not intervals:
+			return True
+		for days, start, end, recurrence in intervals:
+			overnight = end <= start
+			if (clock < start and clock >= end) if overnight else (clock < start or clock >= end):
+				continue
+			day = seconds // 86400 - int(overnight and clock < end)
+			if not days & (1 << ((day + 3) % 7)):
+				continue
+			if recurrence > 1:
+				weeks = (day + 3) // 7 - (validFrom // 86400 + 3) // 7
+				if not validFrom or weeks < 0 or weeks % recurrence:
+					continue
 			return True
 	return False
 
@@ -1117,6 +1136,14 @@ class ServiceListParser:
 				service.regions = self.regions(element)
 				service.logoUrls = self.logos(element)
 				service.linkedApplications = self.linkedApplications(element)
+				service.minimumAge = 0
+				parental = firstDirectChild(element, ["ParentalRating"])
+				if parental is not None:
+					for ageElement in directChildren(parental, ["MinimumAge"]):
+						countries = attrValue(ageElement, ["countryCodes"], "").upper().split()
+						age = safeInt(textValue(ageElement, ""))
+						if age is not None and 4 <= age <= 18 and (not countries or country.upper() in countries):
+							service.minimumAge = max(service.minimumAge, age)
 
 				inlineSource = firstDirectChild(element, ["ContentGuideSource"])
 				if inlineSource is not None:
@@ -1510,6 +1537,43 @@ class ServiceListParser:
 			result.append(app)
 		return result
 
+	@staticmethod
+	def hbbtvApplications(content):
+		"""Decode HTTP XML-AIT into the existing E2 HbbTV application tuples."""
+		markup = content.replace(b"\x00", b"").upper()
+		if len(content) > 256 * 1024 or b"<!DOCTYPE" in markup or b"<!ENTITY" in markup:
+			raise ValueError("Unsafe or oversized XML-AIT")
+		root = fromstring(content)
+		prefix = "{urn:dvb:mhp:2009}"
+		if root.tag != prefix + "ServiceDiscovery":
+			raise ValueError("Not an XML-AIT")
+		applications = {}
+		for app in root.findall("./{0}ApplicationDiscovery/{0}ApplicationList/{0}Application".format(prefix))[:64]:
+			descriptor = app.find(prefix + "applicationDescriptor")
+			if descriptor is None or descriptor.findtext("./{0}type/{0}OtherApp".format(prefix)) != "application/vnd.hbbtv.xhtml+xml":
+				continue
+			control = {"AUTOSTART": 1, "PRESENT": 2}.get(descriptor.findtext(prefix + "controlCode"))
+			orgId = safeInt(app.findtext("./{0}applicationIdentifier/{0}orgId".format(prefix)))
+			appId = safeInt(app.findtext("./{0}applicationIdentifier/{0}appId".format(prefix)))
+			if not control or orgId is None or not 0 <= orgId <= 0xFFFFFFFF or appId is None or not 0 <= appId <= 0xFFFF:
+				continue
+			# Same baseline application profiles as the existing E2 broadcast AIT path.
+			compatible = any(version.findtext(prefix + "profile") == "0" and tuple(version.findtext(prefix + field) for field in ("versionMajor", "versionMinor", "versionMicro")) in (("1", "1", "1"), ("1", "2", "1")) for version in descriptor.findall(prefix + "mhpVersion"))
+			if not compatible:
+				continue
+			location = app.findtext(prefix + "applicationLocation", "").strip()
+			for transport in app.findall(prefix + "applicationTransport"):
+				base = transport.findtext(prefix + "URLBase", "").strip()
+				url = urljoin(base, location)
+				parsed = urlsplit(url)
+				if not base or not location or parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username is not None or parsed.password is not None or len(url.encode("utf-8")) > 8192 or any(ord(char) < 32 for char in url):
+					continue
+				name = app.findtext(prefix + "appName", "HbbTV").strip()[:128]
+				priority = safeInt(descriptor.findtext(prefix + "priority")) or 0
+				applications[(orgId, appId)] = (priority, (control, name, url, orgId, appId, 0))
+				break
+		return [value[1] for value in sorted(applications.values(), key=lambda item: (item[1][0], -item[0]))[:32]]
+
 	def firstDescendantText(self, element, names):
 		child = findFirstDescendant(element, names)
 		return textValue(child, "") if child is not None else ""
@@ -1533,6 +1597,7 @@ class ServiceListParser:
 						"days": days,
 						"days_raw": daysText,
 						"recurrence": safeInt(attrValue(interval, ["recurrence"], 1)) or 1,
+						"recurrence_explicit": "recurrence" in interval.attrib,
 						"start_time": attrValue(interval, ["startTime"], "00:00:00Z"),
 						"end_time": attrValue(interval, ["endTime"], "23:59:59.999Z"),
 					}
@@ -3358,10 +3423,12 @@ class BouquetWriter:
 				continue
 
 			service.selectedRef = ref
+			# Keep the stable IP identity usable even when this bouquet uses DVB.
+			alternative = copy(service)
+			service.ipRef = self.ipRef(alternative, includeIp, includeDrm, ipServiceType, requireFtaVerification)
 			if hybrid and service.matchedRef and not includeDrm and requireFtaVerification:
 				# Work on a copy: the logical channel and its EPG remain DVB.
-				alternative = copy(service)
-				ipRef = self.ipRef(alternative, includeIp, False, ipServiceType, True)
+				ipRef = service.ipRef
 				if ipRef and alternative.selectedInstance.url.startswith(("http://", "https://")):
 					ipFields = ipRef.split(":", 11)
 					for broadcast in getattr(service, "matchedRefs", None) or [service.matchedRef]:
@@ -3548,7 +3615,9 @@ class BouquetWriter:
 		for instance in sorted(service.instances, key=priority):
 			if instance.instanceType not in ("dash", "hls", "ip", "radio", "identifier", "rtsp", "multicast"):
 				continue
-			if not isInstanceAvailable(instance) or getattr(instance, "playbackUnavailable", False):
+			# Scheduled event services keep their channel number outside airtime.
+			# The registered core profile evaluates their clock when they are used.
+			if getattr(instance, "playbackUnavailable", False) and instance.availability is None:
 				skippedUnavailable = True
 				continue
 			if instance.drm and not includeDrm:
@@ -3954,7 +4023,9 @@ def eventToE2Tuple(event):
 		str(event.get("long", "")),
 		tuple(int(item) for item in event.get("event_types", [])),
 	)
-	if "event_id" in event and event["event_id"] is not None:
+	if event.get("parental_ratings"):
+		result += (int(event.get("event_id") or 0), tuple(tuple(item) for item in event["parental_ratings"]))
+	elif "event_id" in event and event["event_id"] is not None:
 		result += (int(event["event_id"]),)
 	return result
 
@@ -4000,6 +4071,7 @@ class ContentGuideParser:
 				"event_types": list(metadata.get("event_types", [])),
 				"program_id": programId,
 				"service_id": serviceId,
+				"parental_ratings": metadata.get("parental_ratings", []),
 			}
 			for attribute in ("eventId", "eventID", "EventId", "EventID"):
 				value = element.get(attribute)
@@ -4052,11 +4124,37 @@ class ContentGuideParser:
 				eventType = genreEventType(genre.get("href"))
 				if eventType is not None and eventType not in eventTypes:
 					eventTypes.append(eventType)
+			parentalRatings = []
+			for guidance in descendants(description, "ParentalGuidance"):
+				ageElement = guideFirstDescendant(guidance, "MinimumAge")
+				age = safeInt(elementText(ageElement)) if ageElement is not None else None
+				if age is not None and 4 <= age <= 18:
+					for region in descendants(guidance, "Region"):
+						country = elementText(region).upper()
+						if reFullmatch("[A-Z]{3}", country):
+							parentalRatings.append((country, age - 3))
+			# Signalled metadata only; never infer tracks from language or names.
+			features = []
+			for audio in descendants(element, "AudioLanguage"):
+				purpose = audio.get("purpose", "")
+				language = elementText(audio)
+				if language:
+					features.append(_("Audio: {0}").format(language))
+				if purpose.startswith("urn:tva:metadata:cs:AudioPurposeCS:2007:"):
+					label = {"1": _("Audio description"), "2": _("Audio for the hard of hearing"), "3": _("Supplemental commentary"), "4": _("Director's commentary"), "5": _("Educational notes"), "6": _("Main programme audio"), "7": _("Clean feed"), "8": _("Dialogue enhancement"), "9": _("Spoken subtitles")}.get(purpose.rsplit(":", 1)[-1])
+					if label:
+						features.append(label)
+			for caption in descendants(description, "CaptionLanguage"):
+				if elementText(caption):
+					features.append(_("Signalled subtitles: {0}").format(elementText(caption)))
+			if features:
+				longText = "\n\n".join(filter(None, (longText, "\n".join(dict.fromkeys(features)))))
 			return {
 				"title": title,
 				"short": shortText,
 				"long": longText,
 				"event_types": eventTypes,
+				"parental_ratings": parentalRatings,
 			}
 
 		if not isinstance(payload, (bytes, str)):
@@ -4252,6 +4350,8 @@ class EpgBridge:
 					"regions": service.regions,
 					"lcn": service.lcn,
 					"enigma2_ref": service.selectedRef or service.matchedRef,
+					"ip_ref": service.ipRef,
+					"minimum_age": getattr(service, "minimumAge", 0),
 					"selected_instance_type": service.selectedInstanceType,
 					"service_kind": getattr(service, "mediaKind", "tv"),
 					"service_kind_source": getattr(service, "mediaKindSource", "default_tv"),
@@ -4463,25 +4563,50 @@ class EpgSynchronizer:
 		self.maxWorkers = max(1, min(int(maxWorkers), 8))
 		self.timeout = max(3, min(int(timeout), 60))
 
-	def syncNowNext(self, serviceList, force=False):
+	def syncNowNext(self, serviceList, force=False, days=0, logger=None):
 		def fetchOne(service, endpoint, sid, force):
+			if logger:
+				logger(_("Loading programme guide: {0}").format(service.name))
 			client = ContentGuideClient(cacheDir=self.cacheDir)
-			response = client.fetchNowNext(
-				endpoint,
-				sid,
-				preferredLanguage=service.language,
-				timeout=self.timeout,
-				force=force,
-			)
+			events = {}
+			stale = False
+			status = None
+			failures = []
+			try:
+				response = client.fetchNowNext(endpoint, sid, preferredLanguage=service.language, timeout=self.timeout, force=force)
+				events.update(((event["start"], event.get("program_id", "")), event) for event in response.events)
+				stale, status = response.fetchResult.stale, response.fetchResult.status
+			except (OSError, ValueError, ParseError) as error:
+				if not days:
+					raise
+				failures.append(str(error))
+			if days:
+				for start, end in alignedScheduleWindows(int(time()), int(time()) + min(7, max(1, days)) * 86400, duration=43200):
+					if logger:
+						logger(_("Loading programme guide: {0}").format(service.name))
+					try:
+						schedule = client.fetchSchedule(endpoint, sid, start, end, preferredLanguage=service.language, inclusive=True, timeout=self.timeout, force=force)
+					except (OSError, ValueError, ParseError) as error:
+						failures.append(str(error))
+						break  # Keep Now/Next and already loaded windows; avoid hammering a failed endpoint.
+					stale = stale or schedule.fetchResult.stale
+					status = schedule.fetchResult.status
+					events.update(((event["start"], event.get("program_id", "")), event) for event in schedule.events)
+			ordered = sorted(events.values(), key=lambda event: event["start"])
+			for event in ordered:
+				if not event.get("parental_ratings") and getattr(service, "minimumAge", 0) and len(service.country or "") == 3:
+					event["parental_ratings"] = [(service.country.upper(), service.minimumAge - 3)]
 			return {
 				"dvbi_id": service.dvbiId,
 				"name": service.name,
 				"service_reference": service.selectedRef,
+				"additional_references": [reference for reference in dict.fromkeys([service.ipRef] + service.epgRefs) if reference and reference != service.selectedRef],
 				"content_guide_service_ref": sid,
-				"import_events": response.e2Events,
-				"event_count": len(response.events),
-				"http_status": response.fetchResult.status,
-				"http_stale": bool(getattr(response.fetchResult, "stale", False)),
+				"import_events": [eventToE2Tuple(event) for event in ordered],
+				"event_count": len(ordered),
+				"http_status": status,
+				"http_stale": bool(stale),
+				"errors": failures,
 			}
 
 		def sourceForService(serviceList, service):
@@ -4527,6 +4652,9 @@ class EpgSynchronizer:
 					)
 
 		entries.sort(key=lambda item: (item.get("service_reference", ""), item.get("content_guide_service_ref", "")))
+		for entry in entries:
+			if entry["http_stale"] or entry.get("errors"):
+				errors.append({"name": entry["name"], "service_reference": entry["service_reference"], "error": "; ".join(entry.get("errors", [])) or _("Cached programme information used")})
 		errors.sort(key=lambda item: (item.get("name", ""), item.get("content_guide_service_ref", "")))
 		return {
 			"enabled": True,
@@ -5446,6 +5574,10 @@ class DvbIManager:
 
 		def updatePlaybackMap(serviceList, includeDrm=False):
 			"""Merge stable DVB-I playback targets for the WHERE_PLAYSERVICE hook."""
+			aitFetcher = ServiceListFetcher(self.httpCacheDir)
+			aitFetcher.MAX_CONTENT_BYTES = aitFetcher.MAX_WIRE_BYTES = 256 * 1024
+			applicationCache = {}
+			log(_("Loading DVB-I HbbTV applications"))
 			path = join(self.metadataDir, "playback_map.json")
 			playbackDir = join(self.metadataDir, "playback")
 			listIndexDir = join(playbackDir, "lists")
@@ -5487,7 +5619,7 @@ class DvbIManager:
 				for instance in service.instances:
 					if instance.instanceType not in ("dash", "hls", "ip", "radio", "identifier", "rtsp", "multicast") or not instance.url:
 						continue
-					if getattr(instance, "playbackUnavailable", False):
+					if getattr(instance, "playbackUnavailable", False) and instance.availability is None:
 						continue
 					if getattr(instance, "drm", False) and not includeDrm:
 						continue
@@ -5526,6 +5658,61 @@ class DvbIManager:
 					"fallback_urls": urls[1:],
 					"updated_at": int(time()),
 				}
+				# All alternatives retain the logical EPG identity, but each carries
+				# its own verified player, media hint and scheduled availability.
+				profileCandidates = []
+				candidateApplications = {}
+				for instance in sorted(service.instances, key=lambda item: item.priority):
+					if instance.drm or not instance.ftaVerified or not instance.url.startswith(("http://", "https://")):
+						continue
+					if instance.playbackUnavailable and instance.availability is None:
+						continue
+					player = selectPlayer(instance, ipServiceType, writer.availablePlayers, writer.automaticPlayer)
+					if player:
+						fields = service.selectedRef.split(":", 11)
+						fields[0] = str(player)
+						fields[9] = enigmaHex(writer.mediaHint(instance, player))
+						fields[10] = quote(playbackUrl(instance), safe="/")
+						target = ":".join(fields)
+						profileCandidates.append((target, availabilityRules(instance.availability)))
+						applications = {}
+						for app in service.linkedApplications + instance.linkedApplications:
+							# Media-controlling apps and generic HTML pages are not Red Button overlays.
+							if app["relation"] != "parallel" or app["content_type"] != "application/vnd.dvb.ait+xml":
+								continue
+							appUrl = urljoin(serviceList.sourceUrl, app["url"])
+							if appUrl not in applicationCache and len(applicationCache) < 256:
+								try:
+									log(_("Loading HbbTV applications: {0}").format(service.name))
+									applicationCache[appUrl] = parser.hbbtvApplications(aitFetcher.fetch(appUrl, timeout=8, force=force).content)
+								except Exception as error:
+									applicationCache[appUrl] = []
+									log(_("HbbTV applications unavailable for {0}: {1}").format(service.name, error))
+							for application in applicationCache.get(appUrl, []):
+								applications[application[3:5]] = application
+						candidateApplications.setdefault(target, list(applications.values())[:32])
+				entry["candidates"] = profileCandidates[:16]
+				entry["minimum_age"] = getattr(service, "minimumAge", 0)
+				for reference in dict.fromkeys([service.selectedRef] + ([service.ipRef] if service.ipRef else []) + list(getattr(service, "matchedRefs", []))):
+					adjusted = []
+					for target, periods in entry["candidates"]:
+						fields = target.split(":", 11)
+						fields[1:9] = reference.split(":")[1:9]
+						adjusted.append((":".join(fields), periods))
+						applications = candidateApplications.get(target, [])
+						if applications:
+							# The associated DVB identity is context for HbbTV, not a synthetic tuner/PMT.
+							triplet = (0, 0, 0)
+							if not urlsplit(unquote(reference.split(":", 11)[10])).scheme:
+								refFields = reference.split(":")
+								triplet = tuple(int(refFields[index], 16) for index in (4, 5, 3))
+							else:
+								for broadcast in service.instances:
+									if all(value is not None and 0 <= value <= 0xFFFF for value in (broadcast.transportStreamId, broadcast.originalNetworkId, broadcast.serviceId)):
+										triplet = (broadcast.transportStreamId, broadcast.originalNetworkId, broadcast.serviceId)
+										break
+							playbackApplications.append((":".join(fields), triplet, applications))
+					playbackProfiles.append((reference, entry["minimum_age"], adjusted))
 				services[token] = entry
 				references[service.selectedRef] = token
 				atomicWriteJson(join(playbackDir, token + ".json"), entry)
@@ -5762,9 +5949,11 @@ class DvbIManager:
 				self.httpCacheDir,
 				maxWorkers=epgWorkers,
 			)
-			epgSyncResult = epgSync.syncNowNext(serviceList, force=force)
+			epgSyncResult = epgSync.syncNowNext(serviceList, force=force, days=int(options.get("epg_days", 3)), logger=log)
 		epgEvents = epgSyncResult.pop("entries", [])
 		epgResult["sync"] = epgSyncResult
+		playbackProfiles = []
+		playbackApplications = []
 		playbackMapPath = updatePlaybackMap(serviceList, includeDrm=includeDrm)
 
 		nativeBouquets = None
@@ -5832,6 +6021,8 @@ class DvbIManager:
 			# update the same provider/region mapping rather than leave stale pairs.
 			"fallback_scope": jsonDumps([getattr(serviceList, "listId", "") or baseServiceListUrl(url), serviceList.region or region], ensure_ascii=True),
 			"hybrid_services": bouquetResult.get("hybrid_services", []),
+			"playback_profiles": playbackProfiles,
+			"hbbtv_applications": playbackApplications,
 			"service_list_name": serviceList.name,
 			"source_url": url,
 			"services_total": len(serviceList.services),
@@ -6263,6 +6454,33 @@ def runSync(job, logger=None):
 	if logger is not None:
 		manager.logger = logger
 	action = job.get("action", "import_url")
+	if action == "epg":
+		serviceList = DvbIServiceList()
+		guides = {}
+		for directory in job["metadata_dirs"]:
+			for path in glob(join(directory, "epg", "*", "epg_service_map.json")):
+				for item in readJson(path, {}).get("services", []):
+					reference = item.get("enigma2_ref")
+					endpoint = item.get("content_guide_source", {}).get("schedule")
+					if not reference or not endpoint:
+						continue
+					identity = (endpoint, item["content_guide_service_ref"], item.get("language", ""), item.get("country", ""))
+					if identity in guides:
+						guides[identity].epgRefs.extend((reference, item.get("ip_ref", "")))
+						continue
+					service = DvbIService()
+					guides[identity] = service
+					service.selectedRef, service.name = reference, item["name"]
+					service.ipRef = item.get("ip_ref", "")
+					service.dvbiId = item["dvbi_id"]
+					service.language, service.country = item.get("language", ""), item.get("country", "")
+					service.minimumAge = item.get("minimum_age", 0)
+					service.contentGuideServiceRef = item["content_guide_service_ref"]
+					service.contentGuideSourceRef = endpoint
+					serviceList.contentGuideSources[endpoint] = {"schedule": endpoint}
+					serviceList.services.append(service)
+		sync = EpgSynchronizer(manager.httpCacheDir).syncNowNext(serviceList, days=job["days"], logger=logger)
+		return {"action": action, "catalog_only": True, "epg_events": sync.pop("entries"), "events_total": sync["events_total"], "sync_complete": not (sync["services_failed"] or sync["services_truncated"]), "epg": sync}
 
 	if action == "discover_regions":
 		result = manager.discoverRegions(job["url"], dict(job.get("options") or {}))

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: DVB-I Manager 0.4.7\n"
+"Project-Id-Version: DVB-I Manager 0.5.1\n"
 "Report-Msgid-Bugs-To: https://github.com/oe-alliance-plugins/DvbIManager/issues\n"
-"POT-Creation-Date: 2026-09-30 05:50+0000\n"
+"POT-Creation-Date: 2026-09-30 20:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,69 +17,88 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../plugin.py:760
+#: ../plugin.py:785
+#, python-brace-format
+msgid ""
+"\n"
+"Programme information is incomplete for {0} channels."
+msgstr ""
+
+#: ../plugin.py:804
 msgid ""
 "\n"
 "Programme information is incomplete; check the import report."
 msgstr ""
 
-#: ../plugin.py:748
+#: ../plugin.py:792
 msgid ""
 "\n"
 "Some sources are unavailable; their last usable entries were retained."
 msgstr ""
 
-#: ../plugin.py:758
+#: ../plugin.py:802
 msgid ""
 "\n"
 "The provider could not supply a valid update; the last usable list was used."
 msgstr ""
 
-#: ../plugin.py:564
+#: ../plugin.py:602
 msgid " (Test / Demo)"
 msgstr ""
 
-#: ../plugin.py:566
+#: ../plugin.py:604
 msgid " (cached; source unavailable)"
 msgstr ""
 
-#: ../plugin.py:87
+#: ../plugin.py:89
 msgid " (saved)"
 msgstr ""
 
-#: ../plugin.py:675
+#: ../plugin.py:713
 msgid " (selected; outside filters)"
 msgstr ""
 
-#: ../plugin.py:828
+#: ../plugin.py:878
 msgid " Provider unavailable; cached data used."
 msgstr ""
 
-#: ../plugin.py:826
+#: ../plugin.py:876
 msgid " Update incomplete; please check the last result."
 msgstr ""
 
-#: ../plugin.py:47
-msgid "1 native HTTP MPEG-TS only"
-msgstr ""
-
-#: ../plugin.py:45
-msgid "4097 GStreamer / Enigma2"
+#: ../plugin.py:74
+msgid "1 day"
 msgstr ""
 
 #: ../plugin.py:48
-msgid "5001 ServiceApp gstplayer"
+msgid "1 native HTTP MPEG-TS only"
+msgstr ""
+
+#: ../plugin.py:74
+msgid "3 days"
 msgstr ""
 
 #: ../plugin.py:46
+msgid "4097 GStreamer / Enigma2"
+msgstr ""
+
+#: ../plugin.py:49
+msgid "5001 ServiceApp gstplayer"
+msgstr ""
+
+#: ../plugin.py:47
 msgid "5002 ServiceApp / exteplayer3"
 msgstr ""
 
-#: ../plugin.py:1576
+#: ../plugin.py:74
+msgid "7 days"
+msgstr ""
+
+#: ../plugin.py:1651
 msgid "A DVB-I background task is already running."
 msgstr ""
 
-#: ../plugin.py:895 ../plugin.py:912
+#: ../plugin.py:948 ../plugin.py:967
 msgid "A DVB-I task is already running."
 msgstr ""
 
@@ -87,19 +106,19 @@ msgstr ""
 msgid "Advanced settings"
 msgstr ""
 
-#: ../plugin.py:535
+#: ../plugin.py:573
 msgid "All"
 msgstr ""
 
-#: ../plugin.py:57 ../plugin.py:643
+#: ../plugin.py:58 ../plugin.py:681
 msgid "All countries"
 msgstr ""
 
-#: ../plugin.py:60 ../plugin.py:664
+#: ../plugin.py:61 ../plugin.py:702
 msgid "All delivery systems"
 msgstr ""
 
-#: ../plugin.py:59 ../plugin.py:657
+#: ../plugin.py:60 ../plugin.py:695
 msgid "All languages"
 msgstr ""
 
@@ -107,23 +126,36 @@ msgstr ""
 msgid "All languages accepts every language; choosing a language filters the available lists."
 msgstr ""
 
-#: ../plugin.py:58 ../plugin.py:650
+#: ../plugin.py:59 ../plugin.py:688
 msgid "All providers"
 msgstr ""
 
-#: ../plugin.py:1024
+#: ../plugin.py:1099
 msgid "Assign fallback"
 msgstr ""
 
-#: ../plugin.py:1396
+#: ../plugin.py:1471
 msgid "Assign internet fallbacks to DVB channels"
 msgstr ""
 
-#: ../plugin.py:1030
+#: ../plugin.py:1105
 msgid "Assign the selected IPTV channel to the selected DVB channel"
 msgstr ""
 
-#: ../plugin.py:44
+#: ../DvbI.py:4143
+msgid "Audio description"
+msgstr ""
+
+#: ../DvbI.py:4143
+msgid "Audio for the hard of hearing"
+msgstr ""
+
+#: ../DvbI.py:4141
+#, python-brace-format
+msgid "Audio: {0}"
+msgstr ""
+
+#: ../plugin.py:45
 msgid "Automatic (4097 GStreamer preferred)"
 msgstr ""
 
@@ -131,41 +163,45 @@ msgstr ""
 msgid "Automatic prefers GStreamer 4097 and falls back to a suitable installed player. A fixed selection only imports streams supported by that player. Native DVB playback requires verified HTTP transport streams."
 msgstr ""
 
-#: ../plugin.py:746
+#: ../plugin.py:790
 #, python-brace-format
 msgid "Available channel lists updated: {0}. Choose a list and, if offered, your region."
 msgstr ""
 
-#: ../plugin.py:1227
+#: ../plugin.py:1302
 #, python-brace-format
 msgid "Bouquet: {0}"
 msgstr ""
 
-#: ../plugin.py:1026 ../plugin.py:1101 ../plugin.py:1115
+#: ../plugin.py:1101 ../plugin.py:1176 ../plugin.py:1190
 msgid "Bouquets"
 msgstr ""
 
-#: ../plugin.py:1273
+#: ../DvbI.py:4656
+msgid "Cached programme information used"
+msgstr ""
+
+#: ../plugin.py:1348
 msgid "Cached service-list information"
 msgstr ""
 
-#: ../DvbI.py:5740
+#: ../DvbI.py:5926
 msgid "Caching DVB-I logos"
 msgstr ""
 
-#: ../plugin.py:1404
+#: ../plugin.py:1479
 msgid "Cancel"
 msgstr ""
 
-#: ../plugin.py:1376
+#: ../plugin.py:1451
 msgid "Cancel any changed settings and exit"
 msgstr ""
 
-#: ../plugin.py:1377
+#: ../plugin.py:1452
 msgid "Cancel any changed settings and exit all menus"
 msgstr ""
 
-#: ../plugin.py:1590
+#: ../plugin.py:1665
 msgid "Channel data is being checked in the background. You can continue watching TV."
 msgstr ""
 
@@ -173,16 +209,16 @@ msgstr ""
 msgid "Channel list"
 msgstr ""
 
-#: ../DvbI.py:5888
+#: ../DvbI.py:6078
 #, python-brace-format
 msgid "Channel list ready: {0} TV, {1} radio"
 msgstr ""
 
-#: ../plugin.py:820
+#: ../plugin.py:870
 msgid "Channel list updated"
 msgstr ""
 
-#: ../plugin.py:754
+#: ../plugin.py:798
 #, python-brace-format
 msgid ""
 "Channel list updated: {0}\n"
@@ -190,19 +226,19 @@ msgid ""
 "The channels are available in the normal TV and radio lists."
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Channel name"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Channel number (LCN)"
 msgstr ""
 
-#: ../plugin.py:1203
+#: ../plugin.py:1278
 msgid "Choose a DVB bouquet and channel on the left, then the matching IPTV channel on the right."
 msgstr ""
 
-#: ../plugin.py:1495
+#: ../plugin.py:1570
 msgid "Choose a channel list and press green to add its free-to-air channels."
 msgstr ""
 
@@ -214,7 +250,7 @@ msgstr ""
 msgid "Choose a region offered by this channel list, or keep the provider's default selection."
 msgstr ""
 
-#: ../plugin.py:1032
+#: ../plugin.py:1107
 msgid "Choose another bouquet in the active list"
 msgstr ""
 
@@ -222,82 +258,86 @@ msgstr ""
 msgid "Choose the broadcaster or platform whose free-to-air channels you want to add."
 msgstr ""
 
-#: ../plugin.py:1023
+#: ../DvbI.py:4143
+msgid "Clean feed"
+msgstr ""
+
+#: ../plugin.py:1042 ../plugin.py:1044 ../plugin.py:1045 ../plugin.py:1098
 msgid "Close"
 msgstr ""
 
-#: ../plugin.py:1028 ../plugin.py:1029
+#: ../plugin.py:1103 ../plugin.py:1104
 msgid "Close the mapping editor"
 msgstr ""
 
-#: ../DvbI.py:5778
+#: ../DvbI.py:5966
 msgid "Committing DVB-I bouquet"
 msgstr ""
 
-#: ../plugin.py:1381
+#: ../plugin.py:1456
 msgid "Configure DVB-I updates in the Enigma2 scheduler"
 msgstr ""
 
-#: ../DvbI.py:4066
+#: ../DvbI.py:4163
 msgid "Content Guide XML exceeds the size limit"
 msgstr ""
 
-#: ../DvbI.py:4063
+#: ../DvbI.py:4160
 msgid "Content Guide XML must be bytes or text"
 msgstr ""
 
-#: ../DvbI.py:4075
+#: ../DvbI.py:4172
 msgid "Content Guide root must be TVAMain"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Content guide service ID"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Content guide source"
 msgstr ""
 
-#: ../plugin.py:1286
+#: ../plugin.py:1361
 msgid "Content type"
 msgstr ""
 
-#: ../DvbI.py:3791
+#: ../DvbI.py:3859
 msgid "ContentGuideServiceRef is required as the sid parameter"
 msgstr ""
 
-#: ../plugin.py:1483
+#: ../plugin.py:1558
 #, python-brace-format
 msgid "Could not read last DVB-I result: {0}"
 msgstr ""
 
-#: ../plugin.py:1331 ../plugin.py:1343
+#: ../plugin.py:1406 ../plugin.py:1418
 #, python-brace-format
 msgid "Could not save fallback mapping: {0}"
 msgstr ""
 
-#: ../plugin.py:1568
+#: ../plugin.py:1643
 #, python-brace-format
 msgid ""
 "Could not start DVB-I import:\n"
 "{0}"
 msgstr ""
 
-#: ../plugin.py:1581
+#: ../plugin.py:1656
 msgid "Could not start the live DVB-I registry refresh."
 msgstr ""
 
-#: ../DvbI.py:5827
+#: ../DvbI.py:6015
 #, python-brace-format
 msgid "Could not write optional import metadata: {0}"
 msgstr ""
 
-#: ../DvbI.py:5808
+#: ../DvbI.py:5996
 #, python-brace-format
 msgid "Could not write optional import report: {0}"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Country"
 msgstr ""
 
@@ -305,7 +345,7 @@ msgstr ""
 msgid "Create TV and radio bouquets in the provider's channel order. Disable this to update global fallback mappings for your existing bouquets only. Existing bouquets are kept."
 msgstr ""
 
-#: ../plugin.py:1649 ../plugin.py:1656
+#: ../plugin.py:1726 ../plugin.py:1733
 msgid "Create TV and radio channel lists from DVB-I"
 msgstr ""
 
@@ -313,72 +353,72 @@ msgstr ""
 msgid "Create additional DVB-I bouquets"
 msgstr ""
 
-#: ../plugin.py:1367 ../plugin.py:1405
+#: ../plugin.py:1442 ../plugin.py:1480
 msgid "Create channel list"
 msgstr ""
 
-#: ../DvbI.py:5633
+#: ../DvbI.py:5819
 #, python-brace-format
 msgid "Current service list is invalid; using last-known-good data: {0}"
 msgstr ""
 
-#: ../plugin.py:1291
+#: ../plugin.py:1366
 msgid "DRM signalled (not supported)"
 msgstr ""
 
-#: ../DvbI.py:4071
+#: ../DvbI.py:4168
 msgid "DTD and entity declarations are not supported"
 msgstr ""
 
-#: ../DvbI.py:2358
+#: ../DvbI.py:2422
 msgid "DTD/entity declarations are not accepted"
 msgstr ""
 
-#: ../plugin.py:1111
+#: ../plugin.py:1186
 msgid "DVB channels"
 msgstr ""
 
-#: ../DvbI.py:223
+#: ../DvbI.py:232
 msgid "DVB-I HTTP cache quota is exhausted"
 msgstr ""
 
-#: ../plugin.py:1648
+#: ../plugin.py:1725
 msgid "DVB-I Manager"
 msgstr ""
 
-#: ../plugin.py:1384
+#: ../plugin.py:1459
 msgid "DVB-I Manager Actions"
 msgstr ""
 
-#: ../plugin.py:902
+#: ../plugin.py:955
 msgid "DVB-I Manager is disabled or not ready."
 msgstr ""
 
-#: ../plugin.py:1669
+#: ../plugin.py:1746
 msgid "DVB-I Resolver"
 msgstr ""
 
-#: ../DvbI.py:3689
+#: ../DvbI.py:3757
 msgid "DVB-I TV/radio lists do not belong together"
 msgstr ""
 
-#: ../DvbI.py:228
+#: ../DvbI.py:237
 msgid "DVB-I URL must use HTTP or HTTPS"
 msgstr ""
 
-#: ../DvbI.py:190
+#: ../DvbI.py:199
 msgid "DVB-I cache object exceeds the total cache quota"
 msgstr ""
 
-#: ../plugin.py:1366 ../plugin.py:1628 ../plugin.py:1655
+#: ../plugin.py:1441 ../plugin.py:1705 ../plugin.py:1732
 msgid "DVB-I channel search"
 msgstr ""
 
-#: ../plugin.py:847 ../plugin.py:927
+#: ../plugin.py:897 ../plugin.py:982
 msgid "DVB-I channel update"
 msgstr ""
 
-#: ../plugin.py:325
+#: ../plugin.py:328
 msgid "DVB-I data prepared"
 msgstr ""
 
@@ -386,11 +426,11 @@ msgstr ""
 msgid "DVB-I enabled"
 msgstr ""
 
-#: ../plugin.py:996
+#: ../plugin.py:1071
 msgid "DVB-I fallback mappings"
 msgstr ""
 
-#: ../plugin.py:775
+#: ../plugin.py:819
 #, python-brace-format
 msgid ""
 "DVB-I import complete.\n"
@@ -403,11 +443,15 @@ msgid ""
 "Report: {12}"
 msgstr ""
 
-#: ../plugin.py:1043
+#: ../plugin.py:1118
 msgid "DVB-I mapping actions"
 msgstr ""
 
-#: ../plugin.py:763
+#: ../plugin.py:897 ../plugin.py:984
+msgid "DVB-I programme guide update"
+msgstr ""
+
+#: ../plugin.py:807
 #, python-brace-format
 msgid ""
 "DVB-I regions loaded.\n"
@@ -415,72 +459,72 @@ msgid ""
 "Regions: {1} selectable, {2} total"
 msgstr ""
 
-#: ../DvbI.py:172 ../DvbI.py:259 ../DvbI.py:265 ../DvbI.py:312
+#: ../DvbI.py:181 ../DvbI.py:268 ../DvbI.py:274 ../DvbI.py:321
 msgid "DVB-I response exceeds the size limit"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "DVB-I service ID"
 msgstr ""
 
-#: ../plugin.py:1255
+#: ../plugin.py:1330
 msgid "DVB-I service details"
 msgstr ""
 
-#: ../DvbI.py:5617
+#: ../DvbI.py:5803
 msgid "DVB-I service list contains no services"
 msgstr ""
 
-#: ../DvbI.py:1303
+#: ../DvbI.py:1330
 msgid "DVB-I service list content must be bytes or text"
 msgstr ""
 
-#: ../DvbI.py:5615 ../DvbI.py:5910
+#: ../DvbI.py:5801 ../DvbI.py:6100
 #, python-brace-format
 msgid "DVB-I service list responseStatus is {0}"
 msgstr ""
 
-#: ../DvbI.py:1310
+#: ../DvbI.py:1337
 msgid "DVB-I service list root must be ServiceList"
 msgstr ""
 
-#: ../plugin.py:1555
+#: ../plugin.py:1630
 #, python-brace-format
 msgid ""
 "DVB-I settings are incomplete:\n"
 "{0}"
 msgstr ""
 
-#: ../plugin.py:741
+#: ../plugin.py:779
 #, python-brace-format
 msgid ""
 "DVB-I synchronisation failed:\n"
 "{0}"
 msgstr ""
 
-#: ../plugin.py:337 ../plugin.py:370
+#: ../plugin.py:340 ../plugin.py:373
 msgid "DVB-I update cancelled"
 msgstr ""
 
-#: ../plugin.py:809
+#: ../plugin.py:853
 #, python-brace-format
 msgid "DVB-I update failed: {0}"
 msgstr ""
 
-#: ../plugin.py:1438
+#: ../plugin.py:1513
 msgid "DVB-I update scheduled. Changes are available in the Enigma2 scheduler."
 msgstr ""
 
-#: ../plugin.py:815
+#: ../plugin.py:865
 msgid "DVB-I: Regions for the selected channel list updated."
 msgstr ""
 
-#: ../plugin.py:813
+#: ../plugin.py:863
 #, python-brace-format
 msgid "DVB-I: {0} available channel lists updated."
 msgstr ""
 
-#: ../plugin.py:819
+#: ../plugin.py:869
 #, python-brace-format
 msgid "DVB-I: {0}{1} — {2} TV, {3} radio."
 msgstr ""
@@ -489,7 +533,7 @@ msgstr ""
 msgid "Data and cache directory"
 msgstr ""
 
-#: ../plugin.py:62 ../plugin.py:693
+#: ../plugin.py:63 ../plugin.py:731
 msgid "Default / no regional selection"
 msgstr ""
 
@@ -497,16 +541,24 @@ msgstr ""
 msgid "Delivery system"
 msgstr ""
 
-#: ../DvbI.py:5661
+#: ../DvbI.py:5847
 msgid "Detecting IP media types with bounded range probes"
 msgstr ""
 
-#: ../DvbI.py:6194
+#: ../DvbI.py:4143
+msgid "Dialogue enhancement"
+msgstr ""
+
+#: ../DvbI.py:4143
+msgid "Director's commentary"
+msgstr ""
+
+#: ../DvbI.py:6384
 #, python-brace-format
 msgid "Discovering lists: {0}"
 msgstr ""
 
-#: ../plugin.py:312
+#: ../plugin.py:315
 msgid "Download and prepare DVB-I data"
 msgstr ""
 
@@ -518,136 +570,157 @@ msgstr ""
 msgid "Download picon logos"
 msgstr ""
 
-#: ../plugin.py:1642
+#: ../plugin.py:1719
 msgid "Edit DVB-I fallback"
+msgstr ""
+
+#: ../DvbI.py:4143
+msgid "Educational notes"
 msgstr ""
 
 #: ../setup.xml
 msgid "Enable DVB-I channel-list updates and registered internet alternatives."
 msgstr ""
 
-#: ../plugin.py:383
+#: ../plugin.py:389
 msgid "Enigma2 EPG cache is unavailable"
 msgstr ""
 
-#: ../DvbI.py:3710
+#: ../DvbI.py:3778
 msgid "Enigma2 could not name the DVB-I channel list: "
 msgstr ""
 
-#: ../DvbI.py:3713
+#: ../DvbI.py:3781
 msgid "Enigma2 could not remove an empty DVB-I channel list: "
 msgstr ""
 
-#: ../DvbI.py:3702
+#: ../DvbI.py:3770
 msgid "Enigma2 could not save the DVB-I channel list: "
 msgstr ""
 
-#: ../plugin.py:1371
+#: ../plugin.py:1446
 msgid "Fallback mappings"
 msgstr ""
 
-#: ../DvbI.py:5890
+#: ../DvbI.py:6080
 #, python-brace-format
 msgid "Fallback mappings prepared: {0}"
 msgstr ""
 
-#: ../plugin.py:744 ../plugin.py:817
+#: ../plugin.py:788 ../plugin.py:867
 #, python-brace-format
 msgid "Fallback mappings updated: {0}. Existing bouquets were not changed."
 msgstr ""
 
-#: ../DvbI.py:5598
+#: ../DvbI.py:5784
 #, python-brace-format
 msgid "Fetching DVB-I service list: {0}"
 msgstr ""
 
-#: ../plugin.py:1041
+#: ../plugin.py:1116
 msgid "First entry"
 msgstr ""
 
-#: ../DvbI.py:2659 ../DvbI.py:2682 ../DvbI.py:2711
+#: ../DvbI.py:2723 ../DvbI.py:2746 ../DvbI.py:2775
 msgid "HLS variant URI is missing"
 msgstr ""
 
-#: ../DvbI.py:2746
+#: ../DvbI.py:2810
 msgid "HLS variant URI must use HTTP or HTTPS"
 msgstr ""
 
-#: ../DvbI.py:2750
+#: ../DvbI.py:2814
 msgid "HTTPS HLS master may not downgrade a variant to HTTP"
 msgstr ""
 
-#: ../plugin.py:1293
+#: ../DvbI.py:5689
+#, python-brace-format
+msgid "HbbTV applications unavailable for {0}: {1}"
+msgstr ""
+
+#: ../plugin.py:1368
 msgid "HbbTV signalled"
+msgstr ""
+
+#: ../setup.xml
+msgid "How many days to request, where supplied by the provider. Existing programme information is retained when a provider is unavailable."
 msgstr ""
 
 #: ../setup.xml
 msgid "IP player"
 msgstr ""
 
-#: ../plugin.py:1111
+#: ../plugin.py:1186
 msgid "IPTV channels"
 msgstr ""
 
-#: ../DvbI.py:3661
+#: ../DvbI.py:3729
 msgid "Incomplete DVB-I TV/radio channel-list result"
 msgstr ""
 
-#: ../DvbI.py:5682
+#: ../DvbI.py:5868
 msgid "Inspecting adaptive manifests for FTA protection"
 msgstr ""
 
-#: ../plugin.py:1219
+#: ../plugin.py:1294
 msgid "Internet fallback is currently disabled in the settings."
 msgstr ""
 
-#: ../DvbI.py:3667
+#: ../plugin.py:461
+msgid "Invalid DVB-I HbbTV metadata"
+msgstr ""
+
+#: ../DvbI.py:3735
 msgid "Invalid DVB-I channel-list filename"
 msgstr ""
 
-#: ../DvbI.py:3671
+#: ../DvbI.py:3739
 msgid "Invalid DVB-I channel-list name"
 msgstr ""
 
-#: ../DvbI.py:3674
+#: ../DvbI.py:3742
 msgid "Invalid DVB-I channel-list size"
 msgstr ""
 
-#: ../plugin.py:430
+#: ../plugin.py:464
 msgid "Invalid DVB-I fallback map"
 msgstr ""
 
-#: ../DvbI.py:3679 ../DvbI.py:3682
+#: ../plugin.py:451
+msgid "Invalid DVB-I playback metadata"
+msgstr ""
+
+#: ../DvbI.py:3747 ../DvbI.py:3750
 msgid "Invalid DVB-I service reference"
 msgstr ""
 
-#: ../DvbI.py:6026
+#: ../DvbI.py:6216
 #, python-brace-format
 msgid "Invalid DVB-I source configuration {0}: {1}"
 msgstr ""
 
-#: ../DvbI.py:117
+#: ../DvbI.py:126
 msgid "Invalid automatic fallback mappings"
 msgstr ""
 
-#: ../DvbI.py:105 ../DvbI.py:108
+#: ../DvbI.py:110 ../DvbI.py:115 ../DvbI.py:117
 #, python-brace-format
 msgid "Invalid fallback mapping file: {0}"
 msgstr ""
 
-#: ../plugin.py:1022
+#: ../plugin.py:1097
 msgid "LEFT/RIGHT: list · OK: open · CH+/CH−: page · BLUE: bouquets · INFO: details"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Language"
 msgstr ""
 
-#: ../plugin.py:1481
+#: ../plugin.py:1556
 msgid "Last DVB-I import"
 msgstr ""
 
-#: ../plugin.py:1452
+#: ../plugin.py:1527
 #, python-brace-format
 msgid ""
 "Last DVB-I import\n"
@@ -663,128 +736,150 @@ msgid ""
 "Bouquets: TV {13}, Radio {14}"
 msgstr ""
 
-#: ../plugin.py:1042
+#: ../plugin.py:1117
 msgid "Last entry"
 msgstr ""
 
-#: ../plugin.py:1370
+#: ../plugin.py:1445
 msgid "Last result"
 msgstr ""
 
-#: ../plugin.py:1274
+#: ../plugin.py:1349
 msgid "List provider"
 msgstr ""
 
-#: ../plugin.py:1274
+#: ../plugin.py:1349
 msgid "List version"
 msgstr ""
 
-#: ../plugin.py:1548
+#: ../plugin.py:1623
 msgid "Live registry data is still loading. Select a service list when it is ready."
 msgstr ""
 
-#: ../plugin.py:669
+#: ../plugin.py:707
 msgid "Live registry data not loaded"
 msgstr ""
 
 #: ../setup.xml
-msgid "Load programme information into the normal Enigma2 programme guide."
+msgid "Load programme information into the normal Enigma2 programme guide. Programme guide updates can also be scheduled independently of channel updates."
 msgstr ""
 
-#: ../plugin.py:323
+#: ../DvbI.py:5579
+msgid "Loading DVB-I HbbTV applications"
+msgstr ""
+
+#: ../plugin.py:326
 msgid "Loading DVB-I data"
 msgstr ""
 
-#: ../plugin.py:1255
+#: ../DvbI.py:5685
+#, python-brace-format
+msgid "Loading HbbTV applications: {0}"
+msgstr ""
+
+#: ../plugin.py:1330
 msgid "Loading cached service-list information…"
 msgstr ""
 
-#: ../plugin.py:1498
+#: ../plugin.py:1573
 msgid "Loading live registry data in the background..."
 msgstr ""
 
-#: ../plugin.py:1542
+#: ../DvbI.py:4568 ../DvbI.py:4585
+#, python-brace-format
+msgid "Loading programme guide: {0}"
+msgstr ""
+
+#: ../plugin.py:1617
 msgid "Loading regions for the selected live service list..."
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Logo URLs"
 msgstr ""
 
-#: ../plugin.py:1207
+#: ../DvbI.py:4143
+msgid "Main programme audio"
+msgstr ""
+
+#: ../plugin.py:1282
 msgid "Manual"
 msgstr ""
 
-#: ../plugin.py:1232
+#: ../plugin.py:1307
 msgid "Manual fallback"
 msgstr ""
 
-#: ../plugin.py:1341
+#: ../plugin.py:1416
 msgid "Manual fallback removed. Any service-list mapping is retained."
 msgstr ""
 
-#: ../plugin.py:1329
+#: ../plugin.py:1404
 msgid "Manual fallback saved."
 msgstr ""
 
-#: ../plugin.py:1217 ../plugin.py:1231
+#: ../plugin.py:1292 ../plugin.py:1306
 msgid "Manual mappings have priority."
 msgstr ""
 
-#: ../DvbI.py:5696
+#: ../DvbI.py:5882
 msgid "Matching broadcast services"
 msgstr ""
 
-#: ../plugin.py:1038
+#: ../plugin.py:1113
 msgid "Move down"
 msgstr ""
 
-#: ../plugin.py:1037
+#: ../plugin.py:1112
 msgid "Move up"
 msgstr ""
 
-#: ../plugin.py:1040
+#: ../plugin.py:1115
 msgid "Next page"
 msgstr ""
 
-#: ../plugin.py:1300
+#: ../plugin.py:1375
 msgid "No additional service-list information is cached."
 msgstr ""
 
-#: ../plugin.py:1247 ../plugin.py:1317
+#: ../plugin.py:1322 ../plugin.py:1392
 msgid "No cached IPTV playback target found."
 msgstr ""
 
-#: ../plugin.py:504
+#: ../plugin.py:542
 #, python-brace-format
 msgid "No cached playback target exists for DVB-I service {0}"
 msgstr ""
 
-#: ../DvbI.py:5736
+#: ../DvbI.py:5922
 msgid "No playable free-to-air channels found. Check reception, region and installed players. Existing channel lists were not changed."
 msgstr ""
 
-#: ../DvbI.py:3691
+#: ../DvbI.py:3759
 msgid "No playable free-to-air channels found. Existing channel lists were not changed."
 msgstr ""
 
-#: ../plugin.py:1445
+#: ../plugin.py:1520
 msgid "No previous DVB-I import result found."
 msgstr ""
 
-#: ../plugin.py:1215 ../plugin.py:1236
+#: ../plugin.py:1290 ../plugin.py:1311
 msgid "Not assigned"
 msgstr ""
 
-#: ../plugin.py:1251
+#: ../plugin.py:1326
 msgid "Not available"
 msgstr ""
 
-#: ../plugin.py:1320
+#: ../plugin.py:74
+msgid "Now/Next only"
+msgstr ""
+
+#: ../plugin.py:1395
 msgid "Only HTTP(S) IPTV channels can be assigned."
 msgstr ""
 
-#: ../plugin.py:1033
+#: ../plugin.py:1108
 msgid "Open the selected bouquet or switch to the IPTV list"
 msgstr ""
 
@@ -796,7 +891,7 @@ msgstr ""
 msgid "Optionally narrow the available lists to one provider."
 msgstr ""
 
-#: ../DvbI.py:5602
+#: ../DvbI.py:5788
 msgid "Parsing DVB-I service list"
 msgstr ""
 
@@ -808,146 +903,155 @@ msgstr ""
 msgid "Prefer service-list fallbacks"
 msgstr ""
 
-#: ../DvbI.py:5716
+#: ../DvbI.py:5902
 msgid "Preparing channel lists and fallback mappings"
 msgstr ""
 
-#: ../DvbI.py:5772
+#: ../DvbI.py:5960
 msgid "Preparing channel lists for Enigma2"
 msgstr ""
 
-#: ../plugin.py:1039
+#: ../plugin.py:1114
 msgid "Previous page"
 msgstr ""
 
-#: ../plugin.py:1286
+#: ../plugin.py:1361
 msgid "Priority"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../setup.xml
+msgid "Programme guide preview"
+msgstr ""
+
+#: ../plugin.py:782
+#, python-brace-format
+msgid "Programme guide updated: {0} events."
+msgstr ""
+
+#: ../plugin.py:1353
 msgid "Provider"
 msgstr ""
 
-#: ../plugin.py:772
+#: ../plugin.py:816
 msgid "Radio: "
 msgstr ""
 
-#: ../plugin.py:1257
+#: ../plugin.py:1332
 msgid "Read cached DVB-I service information"
 msgstr ""
 
-#: ../plugin.py:1380
+#: ../plugin.py:1455
 msgid "Refresh the live DVB-I registry"
 msgstr ""
 
-#: ../plugin.py:1578
+#: ../plugin.py:1653
 msgid "Refreshing live DVB-I registry data..."
 msgstr ""
 
-#: ../plugin.py:1274
+#: ../plugin.py:1349
 msgid "Region"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Regions"
 msgstr ""
 
-#: ../plugin.py:753
+#: ../plugin.py:797
 #, python-brace-format
 msgid "Regions loaded for {0}."
 msgstr ""
 
-#: ../plugin.py:1025
+#: ../plugin.py:1100
 msgid "Remove manual"
 msgstr ""
 
-#: ../plugin.py:1031
+#: ../plugin.py:1106
 msgid "Remove the manual assignment for the selected DVB channel"
 msgstr ""
 
-#: ../plugin.py:1670
+#: ../plugin.py:1747
 msgid "Resolve stable DVB-I playback targets"
 msgstr ""
 
-#: ../plugin.py:1404
+#: ../plugin.py:1479
 msgid "Save"
 msgstr ""
 
-#: ../plugin.py:1378
+#: ../plugin.py:1453
 msgid "Save changed settings or close without changes"
 msgstr ""
 
-#: ../plugin.py:1379
+#: ../plugin.py:1454
 msgid "Save settings and create the selected channel list"
 msgstr ""
 
-#: ../plugin.py:1369
+#: ../plugin.py:1444
 msgid "Schedule updates"
 msgstr ""
 
-#: ../DvbI.py:3812
+#: ../DvbI.py:3880
 msgid "ScheduleInfoEndpoint must use HTTP or HTTPS"
 msgstr ""
 
-#: ../plugin.py:1035
+#: ../plugin.py:1110
 msgid "Select DVB channels"
 msgstr ""
 
-#: ../plugin.py:1036
+#: ../plugin.py:1111
 msgid "Select IPTV channels"
 msgstr ""
 
-#: ../plugin.py:1310
+#: ../plugin.py:1385
 msgid "Select a DVB channel and an IPTV channel first."
 msgstr ""
 
-#: ../plugin.py:61 ../plugin.py:669
+#: ../plugin.py:62 ../plugin.py:707
 msgid "Select one live service list"
 msgstr ""
 
-#: ../plugin.py:167
+#: ../plugin.py:169
 msgid "Select one service list from the live DVB-I registry."
 msgstr ""
 
-#: ../plugin.py:1067 ../plugin.py:1142 ../plugin.py:1228
+#: ../plugin.py:1142 ../plugin.py:1217 ../plugin.py:1303
 msgid "Selected channel"
 msgstr ""
 
-#: ../plugin.py:1207 ../plugin.py:1211
+#: ../plugin.py:1282 ../plugin.py:1286
 msgid "Service list"
 msgstr ""
 
-#: ../plugin.py:1213 ../plugin.py:1251
+#: ../plugin.py:1288 ../plugin.py:1326
 msgid "Service list unknown"
 msgstr ""
 
-#: ../plugin.py:1251 ../plugin.py:1273
+#: ../plugin.py:1326 ../plugin.py:1348
 #, python-brace-format
 msgid "Service list: {0}"
 msgstr ""
 
-#: ../plugin.py:1243
+#: ../plugin.py:1318
 msgid "Service reference:"
 msgstr ""
 
-#: ../plugin.py:1243
+#: ../plugin.py:1318
 #, python-brace-format
 msgid "Service type: {0}"
 msgstr ""
 
-#: ../plugin.py:1274
+#: ../plugin.py:1349
 msgid "Service-list URL"
 msgstr ""
 
-#: ../plugin.py:1251
+#: ../plugin.py:1326
 msgid "Service-list URL:"
 msgstr ""
 
-#: ../plugin.py:1232
+#: ../plugin.py:1307
 msgid "Service-list fallback"
 msgstr ""
 
-#: ../plugin.py:1217 ../plugin.py:1231
+#: ../plugin.py:1292 ../plugin.py:1306
 msgid "Service-list mappings have priority."
 msgstr ""
 
@@ -955,76 +1059,93 @@ msgstr ""
 msgid "Show additional filters and playback settings. These are not needed for normal channel-list creation."
 msgstr ""
 
-#: ../plugin.py:1034
+#: ../plugin.py:1109
 msgid "Show service reference, stream URL and service-list origin"
 msgstr ""
 
-#: ../plugin.py:1391
+#: ../plugin.py:1466
 msgid "Show the last DVB-I import result"
 msgstr ""
 
-#: ../plugin.py:1285
+#: ../plugin.py:1360
 #, python-brace-format
 msgid "Signalled delivery: {0}"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Signalled features"
 msgstr ""
 
-#: ../plugin.py:1278
+#: ../plugin.py:1353
 msgid "Signalled service type"
 msgstr ""
 
-#: ../DvbI.py:6207
+#: ../DvbI.py:4148
+#, python-brace-format
+msgid "Signalled subtitles: {0}"
+msgstr ""
+
+#: ../DvbI.py:6397
 msgid "Source unavailable, stale or empty"
+msgstr ""
+
+#: ../DvbI.py:4143
+msgid "Spoken subtitles"
 msgstr ""
 
 #: ../setup.xml
 msgid "Storage for downloaded channel data and diagnostics."
 msgstr ""
 
-#: ../plugin.py:1247
+#: ../plugin.py:1322
 msgid "Stream URL:"
 msgstr ""
 
-#: ../setup.xml
-msgid "Synchronise now/next EPG"
+#: ../DvbI.py:4143
+msgid "Supplemental commentary"
 msgstr ""
 
-#: ../DvbI.py:5760
+#: ../setup.xml
+msgid "Synchronise programme guide"
+msgstr ""
+
+#: ../DvbI.py:5946
 msgid "Synchronising DVB-I now/next EPG"
 msgstr ""
 
-#: ../plugin.py:770
+#: ../plugin.py:814
 msgid "TV: "
 msgstr ""
 
-#: ../plugin.py:171
+#: ../plugin.py:173
 msgid "The selected live registry entry has no usable ServiceListURI."
 msgstr ""
 
-#: ../plugin.py:1286
+#: ../plugin.py:536
+msgid "This channel is currently off air."
+msgstr ""
+
+#: ../plugin.py:1361
 msgid "URL (service list)"
 msgstr ""
 
-#: ../plugin.py:559
+#: ../plugin.py:597
 msgid "Unnamed list"
 msgstr ""
 
-#: ../plugin.py:1368
+#: ../plugin.py:1443
 msgid "Update available lists"
 msgstr ""
 
-#: ../plugin.py:362
+#: ../plugin.py:365
 msgid "Update channel lists and programme guide"
 msgstr ""
 
-#: ../plugin.py:1405
+#: ../plugin.py:1480
 msgid "Update fallback mappings"
 msgstr ""
 
-#: ../plugin.py:1500
+#: ../plugin.py:1575
 msgid "Updating cached live registry data in the background..."
 msgstr ""
 
@@ -1040,7 +1161,7 @@ msgstr ""
 msgid "Use internet fallback"
 msgstr ""
 
-#: ../DvbI.py:5744
+#: ../DvbI.py:5930
 msgid "Writing DVB-I ContentGuide / EPG mapping metadata"
 msgstr ""
 
@@ -1048,255 +1169,255 @@ msgstr ""
 msgid "Yes prefers matching free-to-air satellite, cable or terrestrial channels. No creates an IP-only list and skips channels without a usable free-to-air stream. Regions and reception modes have separate bouquets."
 msgstr ""
 
-#: ../DvbI.py:4132
+#: ../DvbI.py:4229
 msgid "cache_dir is required when no fetcher is supplied"
 msgstr ""
 
-#: ../DvbI.py:2198
+#: ../DvbI.py:2262
 msgid "cache_dir or fetcher is required"
 msgstr ""
 
-#: ../DvbI.py:236
+#: ../DvbI.py:245
 msgid "cached DVB-I response exceeds the size limit"
 msgstr ""
 
-#: ../DvbI.py:4796
+#: ../DvbI.py:4923
 msgid "credentials are not allowed in logo URLs"
 msgstr ""
 
-#: ../DvbI.py:230
+#: ../DvbI.py:239
 msgid "credentials in DVB-I URLs are not supported"
 msgstr ""
 
-#: ../DvbI.py:2748
+#: ../DvbI.py:2812
 msgid "credentials in HLS variant URIs are not supported"
 msgstr ""
 
-#: ../DvbI.py:3814
+#: ../DvbI.py:3882
 msgid "credentials in ScheduleInfoEndpoint URLs are not supported"
 msgstr ""
 
-#: ../DvbI.py:2035
+#: ../DvbI.py:2099
 msgid "credentials in media URLs are not supported"
 msgstr ""
 
-#: ../DvbI.py:2062
+#: ../DvbI.py:2126
 msgid "credentials in redirected media URLs are not supported"
 msgstr ""
 
-#: ../DvbI.py:6009
+#: ../DvbI.py:6199
 msgid "duplicate source id"
 msgstr ""
 
-#: ../DvbI.py:2630
+#: ../DvbI.py:2694
 msgid "empty HLS key attribute"
 msgstr ""
 
-#: ../DvbI.py:3904
+#: ../DvbI.py:3972
 msgid "empty dateTime"
 msgstr ""
 
-#: ../DvbI.py:3891
+#: ../DvbI.py:3959
 msgid "end must be later than a non-negative start"
 msgstr ""
 
-#: ../DvbI.py:5986
+#: ../DvbI.py:6176
 msgid "expected <dvbi> root"
 msgstr ""
 
-#: ../DvbI.py:5990
+#: ../DvbI.py:6180
 msgid "expected <source> entry"
 msgstr ""
 
-#: ../DvbI.py:2201
+#: ../DvbI.py:2265
 msgid "fetcher must provide fetch(url, timeout, force)"
 msgstr ""
 
-#: ../DvbI.py:2400
+#: ../DvbI.py:2464
 msgid "fetcher returned non-byte manifest content"
 msgstr ""
 
-#: ../DvbI.py:2625
+#: ../DvbI.py:2689
 msgid "invalid HLS key attribute"
 msgstr ""
 
-#: ../DvbI.py:2739 ../DvbI.py:2741
+#: ../DvbI.py:2803 ../DvbI.py:2805
 msgid "invalid HLS variant URI"
 msgstr ""
 
-#: ../DvbI.py:6005
+#: ../DvbI.py:6195
 msgid "invalid boolean: "
 msgstr ""
 
-#: ../DvbI.py:4788 ../DvbI.py:4790
+#: ../DvbI.py:4915 ../DvbI.py:4917
 msgid "invalid logo URL"
 msgstr ""
 
-#: ../DvbI.py:4800
+#: ../DvbI.py:4927
 msgid "invalid logo URL port"
 msgstr ""
 
-#: ../DvbI.py:6183
+#: ../DvbI.py:6373
 msgid "invalid registry source set"
 msgstr ""
 
-#: ../DvbI.py:6000
+#: ../DvbI.py:6190
 msgid "invalid source kind"
 msgstr ""
 
-#: ../DvbI.py:6153
+#: ../DvbI.py:6343
 msgid "live registry returned no service lists; keeping the cached catalogue"
 msgstr ""
 
-#: ../DvbI.py:6157
+#: ../DvbI.py:6347
 #, python-brace-format
 msgid "live registry shrank from {0} to {1} lists; keeping last-known-good data"
 msgstr ""
 
-#: ../DvbI.py:4804
+#: ../DvbI.py:4931
 msgid "local logo hosts are not allowed"
 msgstr ""
 
-#: ../DvbI.py:4786
+#: ../DvbI.py:4913
 msgid "logo URL must be text"
 msgstr ""
 
-#: ../DvbI.py:4794
+#: ../DvbI.py:4921
 msgid "logo URL must use HTTP or HTTPS"
 msgstr ""
 
-#: ../DvbI.py:2713
+#: ../DvbI.py:2777
 msgid "malformed HLS key declaration"
 msgstr ""
 
-#: ../DvbI.py:2403
+#: ../DvbI.py:2467
 msgid "manifest exceeds the inspection size limit"
 msgstr ""
 
-#: ../DvbI.py:2033
+#: ../DvbI.py:2097
 msgid "media probe accepts only HTTP(S) URLs"
 msgstr ""
 
-#: ../DvbI.py:2060
+#: ../DvbI.py:2124
 msgid "media probe redirect left HTTP(S)"
 msgstr ""
 
-#: ../DvbI.py:2064
+#: ../DvbI.py:2128
 msgid "media probe rejected HTTPS downgrade redirect"
 msgstr ""
 
-#: ../DvbI.py:6013
+#: ../DvbI.py:6203
 msgid "no discovery sources configured"
 msgstr ""
 
-#: ../DvbI.py:4810
+#: ../DvbI.py:4937
 msgid "non-public logo addresses are not allowed"
 msgstr ""
 
-#: ../DvbI.py:5983
+#: ../DvbI.py:6173
 msgid "oversized XML or unsupported document declaration"
 msgstr ""
 
-#: ../DvbI.py:6236
+#: ../DvbI.py:6426
 msgid "registry returned too many service lists"
 msgstr ""
 
-#: ../DvbI.py:2362
+#: ../DvbI.py:2426
 msgid "resource is not a DASH MPD"
 msgstr ""
 
-#: ../DvbI.py:2647
+#: ../DvbI.py:2711
 msgid "resource is not an HLS playlist"
 msgstr ""
 
-#: ../plugin.py:516
+#: ../plugin.py:554
 msgid "saved"
 msgstr ""
 
-#: ../plugin.py:702
+#: ../plugin.py:740
 msgid "saved; region data not loaded"
 msgstr ""
 
-#: ../plugin.py:680
+#: ../plugin.py:718
 msgid "saved; unavailable in current live catalogue"
 msgstr ""
 
-#: ../DvbI.py:3846 ../DvbI.py:3851 ../DvbI.py:3889
+#: ../DvbI.py:3914 ../DvbI.py:3919 ../DvbI.py:3957
 msgid "schedule timestamps must be Unix integers"
 msgstr ""
 
-#: ../DvbI.py:3855
+#: ../DvbI.py:3923
 msgid "schedule timestamps must be multiples of 10800 seconds"
 msgstr ""
 
-#: ../DvbI.py:3853
+#: ../DvbI.py:3921
 msgid "schedule timestamps must not be negative"
 msgstr ""
 
-#: ../DvbI.py:3857
+#: ../DvbI.py:3925
 msgid "schedule windows must be exactly 6 or 12 hours"
 msgstr ""
 
-#: ../DvbI.py:5628
+#: ../DvbI.py:5814
 #, python-brace-format
 msgid "service count dropped from {0} to {1}; refusing an unconfirmed mass removal"
 msgstr ""
 
-#: ../DvbI.py:6062
+#: ../DvbI.py:6252
 msgid "service list contains no services"
 msgstr ""
 
-#: ../DvbI.py:5994
+#: ../DvbI.py:6184
 msgid "source URL must be an absolute HTTP(S) URL without credentials"
 msgstr ""
 
-#: ../DvbI.py:2469
+#: ../DvbI.py:2533
 msgid "timezone required"
 msgstr ""
 
-#: ../DvbI.py:310
+#: ../DvbI.py:319
 msgid "uncompressed DVB-I response exceeds the size limit"
 msgstr ""
 
-#: ../DvbI.py:6292
+#: ../DvbI.py:6509
 #, python-brace-format
 msgid "unknown DVB-I task action: {0}"
 msgstr ""
 
-#: ../DvbI.py:6016
+#: ../DvbI.py:6206
 msgid "unknown defaultSource"
 msgstr ""
 
-#: ../plugin.py:741 ../plugin.py:806
+#: ../plugin.py:779 ../plugin.py:850
 msgid "unknown task error"
 msgstr ""
 
-#: ../DvbI.py:1312
+#: ../DvbI.py:1339
 msgid "unsupported DVB-I service list namespace"
 msgstr ""
 
-#: ../DvbI.py:3970
+#: ../DvbI.py:4040
 msgid "unsupported ISO 8601 duration"
 msgstr ""
 
-#: ../DvbI.py:2463
+#: ../DvbI.py:2527
 msgid "unsupported duration"
 msgstr ""
 
-#: ../DvbI.py:2617
+#: ../DvbI.py:2681
 msgid "unterminated HLS attribute quote"
 msgstr ""
 
-#: ../DvbI.py:3884
+#: ../DvbI.py:3952
 msgid "window duration must be 6 or 12 hours"
 msgstr ""
 
-#: ../DvbI.py:4599 ../DvbI.py:4601
+#: ../DvbI.py:4726 ../DvbI.py:4728
 #, python-brace-format
 msgid "{0} must be a positive integer"
 msgstr ""
 
-#: ../DvbI.py:4619 ../DvbI.py:4621
+#: ../DvbI.py:4746 ../DvbI.py:4748
 #, python-brace-format
 msgid "{0} must be positive"
 msgstr ""

@@ -3,7 +3,7 @@ import setup_translate
 
 pkg = 'Extensions.DvbIManager'
 setup(name='enigma2-plugin-extensions-dvbimanager',
-      version='0.4.7',
+      version='0.5.1',
       description='DVB-I channel lists, broadcast fallback, picons and EPG for OpenATV',
       package_dir={pkg: 'DvbIManager'},
       packages=[pkg],

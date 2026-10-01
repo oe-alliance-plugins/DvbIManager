@@ -29,7 +29,7 @@ from Screens.TextBox import TextBox
 from Scheduler import SchedulerEntry, TIMERTYPE, addFunctionTimer, functionTimers
 from skin import parseFont
 
-from enigma import RT_VALIGN_CENTER, eDVBDB, eEPGCache, eListboxPythonMultiContent, eServiceCenter, eServiceReference, eTimer, getDesktop, setDVBIFallbackServices
+from enigma import RT_VALIGN_CENTER, eDVBDB, eEPGCache, eListboxPythonMultiContent, eServiceCenter, eServiceReference, eTimer, getDesktop, getDVBIPlaybackService, getDVBIServiceAvailability, setDVBIFallbackServices, setDVBIServiceProfiles, setDVBIHbbTVApplications
 
 from . import _, __version__, PluginLanguageDomain
 from .DvbI import DvbIManager, FallbackStore, REGISTRY_CATALOG_SCHEMA, loadSourceConfig, getRegistrySourceList, runSync, getAvailablePlayers, installBouquets, refreshPicons, regionCatalogPath, withRegionId, atomicWriteJson, readJson
@@ -38,6 +38,7 @@ from .DvbI import DvbIManager, FallbackStore, REGISTRY_CATALOG_SCHEMA, loadSourc
 PLUGIN_VERSION = __version__
 
 SCHEDULER_ID = "dvbi_update"
+EPG_SCHEDULER_ID = "dvbi_epg"
 SESSION = None
 
 IP_SERVICE_TYPE_CHOICES = [
@@ -70,6 +71,7 @@ config.plugins.dvbi.download_logos = ConfigYesNo(default=True)
 config.plugins.dvbi.export_xmltv = ConfigYesNo(default=False)
 config.plugins.dvbi.export_epg_probe = ConfigYesNo(default=True)
 config.plugins.dvbi.sync_epg_now_next = ConfigYesNo(default=True)
+config.plugins.dvbi.epgDays = ConfigSelection(default=3, choices=[(0, _("Now/Next only")), (1, _("1 day")), (3, _("3 days")), (7, _("7 days"))])
 config.plugins.dvbi.xmltv_path = ConfigText(default="/media/hdd/dvbi/metadata/dvbi_channels.xml", fixed_size=False)
 
 # Keep the stored choice valid until the live catalogue supplies its label.
@@ -244,6 +246,7 @@ def importOptions(force):
 		"export_xmltv": config.plugins.dvbi.export_xmltv.value,
 		"export_epg_probe": config.plugins.dvbi.export_epg_probe.value,
 		"sync_epg_now_next": config.plugins.dvbi.sync_epg_now_next.value,
+		"epg_days": config.plugins.dvbi.epgDays.value,
 		"epg_workers": 4,
 		"probe_media": True,
 		"media_probe_max": 1024,
@@ -370,7 +373,10 @@ class DvbIPublishTask(Task):
 			raise RuntimeError(_("DVB-I update cancelled"))
 		reloadBouquets(self.job.result)
 		PLAYBACK_CACHE.clear()
-		self.queue.extend(self.job.result.pop("epg_events", []))
+		for entry in self.job.result.pop("epg_events", []):
+			self.queue.append(entry)
+			for reference in entry.get("additional_references", []):
+				self.queue.append(dict(entry, service_reference=reference))
 		self.total = len(self.queue)
 		self.timer = eTimer()
 		self.timer.callback.append(self.runBatch)
@@ -381,10 +387,13 @@ class DvbIPublishTask(Task):
 			cache = eEPGCache.getInstance()
 			if self.queue and cache is None:
 				raise RuntimeError(_("Enigma2 EPG cache is unavailable"))
-			for unused in range(min(8, len(self.queue))):
+			for unused in range(min(2, len(self.queue))):
 				entry = self.queue.popleft()
 				if entry.get("service_reference") and entry.get("import_events"):
-					cache.importEvents(entry["service_reference"], entry["import_events"])
+					cache.importEvents(entry["service_reference"], entry["import_events"][:100])
+					if len(entry["import_events"]) > 100:
+						entry["import_events"] = entry["import_events"][100:]
+						self.queue.appendleft(entry)
 			self.setProgress(100 if not self.total else 100 * (self.total - len(self.queue)) // self.total)
 		except Exception as error:
 			from Components.Task import FailedPostcondition
@@ -410,9 +419,13 @@ def activateHybrid(result=None, shutdown=False, manual=None):
 	"""Publish a small, already-probed map; core never reads plugin settings."""
 	manualUpdate = manual is not None
 	if shutdown:
+		setDVBIHbbTVApplications([])
 		setDVBIFallbackServices([])
+		setDVBIServiceProfiles([])
 		return
-	if result is None and not manualUpdate and not (config.plugins.dvbi.enabled.value and config.plugins.dvbi.hybrid.value):
+	if result is None and not manualUpdate and not config.plugins.dvbi.enabled.value:
+		setDVBIHbbTVApplications([])
+		setDVBIServiceProfiles([])
 		return setDVBIFallbackServices([])
 	try:
 		store = FallbackStore()
@@ -424,7 +437,28 @@ def activateHybrid(result=None, shutdown=False, manual=None):
 			# Replace only this provider/region, never another scope or manual entries.
 			lists[key] = result["hybrid_services"]
 			store.sources[key] = {"name": result.get("service_list_name", ""), "url": result.get("source_url", "")}
+			store.profiles[key] = result.get("playback_profiles", [])
+			store.applications[key] = result.get("hbbtv_applications", [])
 		mapping = store.merge(lists, manual, config.plugins.dvbi.preferAutomatic.value)
+		profiles = {}
+		for entries in store.profiles.values():
+			for source, age, candidates in entries:
+				isBroadcast = not eServiceReference(source).getPath()
+				if isBroadcast and (not config.plugins.dvbi.hybrid.value or source not in mapping or not candidates or eServiceReference(candidates[0][0]) != eServiceReference(mapping[source])):
+					continue
+				profiles[source] = (source, age, [(target, None if periods is None else [(start, end, [tuple(interval) for interval in intervals]) for start, end, intervals in periods]) for target, periods in candidates])
+		if setDVBIServiceProfiles(list(profiles.values()) if config.plugins.dvbi.enabled.value else []) < 0:
+			raise ValueError(_("Invalid DVB-I playback metadata"))
+		targets = {eServiceReference(target).toCompareString() for source, age, candidates in profiles.values() for target, periods in candidates}
+		applications = {}
+		if config.plugins.dvbi.enabled.value:
+			for entries in store.applications.values():
+				for reference, triplet, apps in entries:
+					ref = eServiceReference(reference)
+					if ref.type == 4097 and ref.toCompareString() in targets:
+						applications[ref.toCompareString()] = (reference, tuple(triplet), [tuple(app) for app in apps])
+		if setDVBIHbbTVApplications(list(applications.values())) < 0:
+			raise ValueError(_("Invalid DVB-I HbbTV metadata"))
 		count = setDVBIFallbackServices(list(mapping.items()))
 		if count < 0:
 			raise ValueError(_("Invalid DVB-I fallback map"))
@@ -432,7 +466,7 @@ def activateHybrid(result=None, shutdown=False, manual=None):
 			setDVBIFallbackServices([])
 			count = 0
 		if result is not None or manual != savedManual:
-			atomicWriteJson(store.path, {"version": 1, "automatic": lists, "manual": manual, "sources": store.sources})
+			atomicWriteJson(store.path, {"version": 1, "automatic": lists, "manual": manual, "sources": store.sources, "profiles": store.profiles, "applications": store.applications})
 		if result is not None:
 			result["hybrid_services_active"] = count
 			result["hybrid_services_total"] = len(mapping)
@@ -496,6 +530,10 @@ def resolveDvbiService(service, **kwargs):
 		path = ""
 	if not path.startswith("dvbi://"):
 		return None, None
+	state = getDVBIServiceAvailability(service)
+	if state:
+		target = getDVBIPlaybackService(service, eServiceReference())
+		return (target.getPath(), None) if target is not None else (None, _("This channel is currently off air."))
 	token = path[len("dvbi://"):].split("/", 1)[0]
 	entry = playbackEntry(token)
 	url = entry.get("url", "")
@@ -740,6 +778,12 @@ def formatTaskResult(result):
 	if not result.get("ok"):
 		return _("DVB-I synchronisation failed:\n{0}").format(result.get("error", _("unknown task error")))
 	action = result.get("action")
+	if action == "epg":
+		text = _("Programme guide updated: {0} events.").format(result.get("events_total", 0))
+		if not result.get("sync_complete", True):
+			epg = result.get("epg", {})
+			text += _("\nProgramme information is incomplete for {0} channels.").format(epg.get("services_failed", 0) + epg.get("services_truncated", 0))
+		return text
 	if result.get("create_bouquets") is False:
 		return _("Fallback mappings updated: {0}. Existing bouquets were not changed.").format(result.get("hybrid_services_total", 0))
 	if action == "discover_registry":
@@ -809,6 +853,12 @@ def showTaskResult(session, result):
 			session.showError(_("DVB-I update failed: {0}").format(detail), timeout=8)
 			return
 		action = result.get("action")
+		if action == "epg":
+			if result.get("sync_complete", True):
+				session.showInfo(formatTaskResult(result), timeout=6)
+			else:
+				session.showWarning(formatTaskResult(result), timeout=8)
+			return
 		if action == "discover_registry":
 			text = _("DVB-I: {0} available channel lists updated.").format(result.get("offerings_total", 0))
 		elif action == "discover_regions":
@@ -844,7 +894,7 @@ def launchTask(request, session, notify=False, callback=None, schedulerEntry=Non
 	identity = (request["action"], request.get("url", ""))
 	if any((job.dvbiAction, job.dvbiUrl) == identity for job in dvbiJobs()):
 		return False
-	job = Job(_("DVB-I channel update"))
+	job = Job(_("DVB-I programme guide update") if request["action"] == "epg" else _("DVB-I channel update"))
 	job.dvbiAction, job.dvbiUrl = identity
 	job.result = {"action": request["action"]}
 	job.cancelRequested = False
@@ -861,6 +911,9 @@ def launchTask(request, session, notify=False, callback=None, schedulerEntry=Non
 		success = bool(result.get("ok") and result.get("sync_complete", True))
 		if schedulerEntry is not None:
 			schedulerEntry.log(0 if success else 30, formatTaskResult(result))
+			if result.get("action") == "epg":
+				for issue in result.get("epg", {}).get("errors", [])[:10]:
+					schedulerEntry.log(30, "{0}: {1}".format(issue.get("name", ""), issue["error"]))
 		if callback is not None:
 			callback(success)
 		return False  # E2 JobManager records the failure; no modal retry popup.
@@ -902,7 +955,9 @@ def startScheduled(callback, entry):
 		entry.log(30, _("DVB-I Manager is disabled or not ready."))
 		return False
 	try:
-		started = launchTask(buildImportJob(), SESSION, notify=True, callback=callback, schedulerEntry=entry)
+		request = ({"action": "epg", "data_dir": config.plugins.dvbi.cache_dir.value, "metadata_dirs": metadataDirectories(), "days": config.plugins.dvbi.epgDays.value}
+			if entry.function == EPG_SCHEDULER_ID else buildImportJob())
+		started = launchTask(request, SESSION, notify=True, callback=callback, schedulerEntry=entry)
 	except Exception as error:
 		entry.log(30, str(error))
 		return False
@@ -925,6 +980,8 @@ def registerScheduler():
 	if not functionTimers.getItem(SCHEDULER_ID):
 		# PythonTask handles the thread and delivers completion on the main loop.
 		addFunctionTimer(SCHEDULER_ID, _("DVB-I channel update"), startScheduled, cancelScheduled, useOwnThread=True)
+	if not functionTimers.getItem(EPG_SCHEDULER_ID):
+		addFunctionTimer(EPG_SCHEDULER_ID, _("DVB-I programme guide update"), startScheduled, cancelScheduled, useOwnThread=True)
 
 
 def newSchedule(clock=(3, 0)):
@@ -1627,6 +1684,8 @@ def autostart(reason, session=None, **kwargs):
 		activateHybrid(shutdown=True)
 		if functionTimers.getItem(SCHEDULER_ID):
 			functionTimers.remove(SCHEDULER_ID)
+		if functionTimers.getItem(EPG_SCHEDULER_ID):
+			functionTimers.remove(EPG_SCHEDULER_ID)
 		return
 	registerScheduler()
 	if session is not None:

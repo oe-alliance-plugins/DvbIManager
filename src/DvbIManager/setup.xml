@@ -19,7 +19,10 @@
 			<item level="0" text="Prefer service-list fallbacks" description="Prefer automatic DVB-I mappings over manual assignments. Disable this to give manual mappings priority. Both mappings are kept when updates run. Press EPG to edit manual mappings.">config.plugins.dvbi.preferAutomatic</item>
 			<item level="0" text="IP player" description="Automatic prefers GStreamer 4097 and falls back to a suitable installed player. A fixed selection only imports streams supported by that player. Native DVB playback requires verified HTTP transport streams.">config.plugins.dvbi.ip_service_type</item>
 			<item level="0" text="Download picon logos" description="Download channel logos in the background and install them in the normal Enigma2 picon paths. Existing picons are kept.">config.plugins.dvbi.download_logos</item>
-			<item level="0" text="Synchronise now/next EPG" description="Load programme information into the normal Enigma2 programme guide.">config.plugins.dvbi.sync_epg_now_next</item>
+			<item level="0" text="Synchronise programme guide" description="Load programme information into the normal Enigma2 programme guide. Programme guide updates can also be scheduled independently of channel updates.">config.plugins.dvbi.sync_epg_now_next</item>
+			<if conditional="config.plugins.dvbi.sync_epg_now_next.value">
+				<item level="0" text="Programme guide preview" description="How many days to request, where supplied by the provider. Existing programme information is retained when a provider is unavailable.">config.plugins.dvbi.epgDays</item>
+			</if>
 			<item level="0" text="Data and cache directory" description="Storage for downloaded channel data and diagnostics.">config.plugins.dvbi.cache_dir</item>
 		</if>
 	</setup>
