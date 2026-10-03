@@ -424,7 +424,7 @@ msgstr "Obiekt pamięci podręcznej DVB-I przekracza całkowity limit pamięci p
 
 #: ../plugin.py:1441 ../plugin.py:1705 ../plugin.py:1732
 msgid "DVB-I channel search"
-msgstr "Wyszukiwanie kanałów DVB-I"
+msgstr "Skanowanie DVB-I"
 
 #: ../plugin.py:897 ../plugin.py:982
 msgid "DVB-I channel update"
